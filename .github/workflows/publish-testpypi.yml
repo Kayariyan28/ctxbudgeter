@@ -1,0 +1,31 @@
+name: Publish to TestPyPI
+
+# Manual dry-run before a real release. Configure trusted publisher on TestPyPI:
+#   https://test.pypi.org/manage/account/publishing/
+# Same fields as PyPI, but environment name should be "testpypi".
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/ctxbudgeter
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install --upgrade build twine
+      - run: python -m build
+      - run: python -m twine check dist/*
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/

@@ -1,0 +1,128 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "ctxbudgeter"
+version = "0.2.0"
+description = "Context compiler for agentic AI: compile clean, cheap, auditable context under a token budget. Framework-agnostic. Local-first. Deterministic."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Karan Chandra Dey", email = "karandey3@outlook.com" },
+]
+maintainers = [
+    { name = "Karan Chandra Dey", email = "karandey3@outlook.com" },
+]
+keywords = [
+    "llm",
+    "agents",
+    "context-engineering",
+    "context",
+    "prompt",
+    "prompt-engineering",
+    "token-budget",
+    "prompt-caching",
+    "anthropic",
+    "openai",
+    "langchain",
+    "langgraph",
+    "pydantic-ai",
+    "crewai",
+    "rag",
+    "ai",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
+    "Framework :: Pytest",
+]
+dependencies = [
+    "pydantic>=2.5,<3.0",
+    "typer>=0.9",
+    "rich>=13.0",
+]
+
+[project.optional-dependencies]
+tiktoken = ["tiktoken>=0.5"]
+anthropic = ["anthropic>=0.30"]
+openai = ["openai>=1.0"]
+langchain = ["langchain-core>=0.1"]
+yaml = ["PyYAML>=6.0"]
+http = ["requests>=2.28"]
+all = [
+    "tiktoken>=0.5",
+    "anthropic>=0.30",
+    "openai>=1.0",
+    "langchain-core>=0.1",
+    "PyYAML>=6.0",
+    "requests>=2.28",
+]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-asyncio>=0.21",
+    "tiktoken>=0.5",
+    "PyYAML>=6.0",
+    "ruff>=0.1",
+    "mypy>=1.5",
+]
+
+[project.scripts]
+ctxbudgeter = "ctxbudgeter.cli:app"
+
+[project.entry-points.pytest11]
+ctxbudgeter = "ctxbudgeter.pytest_plugin"
+
+[project.urls]
+Homepage = "https://github.com/Kayariyan28/ctxbudgeter"
+Documentation = "https://github.com/Kayariyan28/ctxbudgeter#readme"
+Repository = "https://github.com/Kayariyan28/ctxbudgeter"
+Issues = "https://github.com/Kayariyan28/ctxbudgeter/issues"
+Changelog = "https://github.com/Kayariyan28/ctxbudgeter/blob/main/CHANGELOG.md"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ctxbudgeter"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "/src",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+pythonpath = ["src"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "N", "RUF"]
+ignore = ["E501"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
