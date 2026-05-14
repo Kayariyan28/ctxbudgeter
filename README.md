@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/banner.png" alt="ctxbudgeter — context compiler for agentic AI" width="100%" />
+</p>
+
 # ctxbudgeter
 
 [![PyPI](https://img.shields.io/pypi/v/ctxbudgeter.svg)](https://pypi.org/project/ctxbudgeter/)

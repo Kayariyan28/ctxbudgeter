@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ctxbudgeter — README banner (1280×640)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; }
+    body {
+      background: #161616;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 300;
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; padding: 40px;
+    }
+
+    .card {
+      width: 1280px; height: 640px;
+      background: #000;
+      color: #fff;
+      position: relative;
+      padding: 56px 64px;
+      overflow: hidden;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.55);
+      letter-spacing: 0.015em;
+    }
+
+    .crop { position: absolute; width: 14px; height: 14px; opacity: 0.55; }
+    .crop.tl { top: 22px; left: 22px;   border-left: 1px solid #fff; border-top: 1px solid #fff; }
+    .crop.tr { top: 22px; right: 22px;  border-right: 1px solid #fff; border-top: 1px solid #fff; }
+    .crop.bl { bottom: 22px; left: 22px;  border-left: 1px solid #fff; border-bottom: 1px solid #fff; }
+    .crop.br { bottom: 22px; right: 22px; border-right: 1px solid #fff; border-bottom: 1px solid #fff; }
+
+    .marker {
+      display: inline-block; width: 9px; height: 9px;
+      background: #fff; margin-right: 10px; vertical-align: 1px;
+    }
+
+    .header, .footer {
+      position: absolute; left: 64px; right: 64px;
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+    }
+    .header { top: 48px; }
+    .footer { bottom: 48px; }
+
+    .body-area {
+      position: absolute;
+      top: 108px; left: 64px; right: 64px; bottom: 108px;
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      column-gap: 56px;
+      align-items: start;
+    }
+
+    .label {
+      font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+      color: rgba(255,255,255,0.48);
+    }
+
+    .h0 {
+      font-size: 100px; font-weight: 300; line-height: 0.95;
+      letter-spacing: -0.04em; margin: 18px 0 0 0;
+    }
+
+    .tagline {
+      font-size: 21px; line-height: 1.5;
+      color: rgba(255,255,255,0.86);
+      margin-top: 26px; max-width: 600px;
+    }
+    .tagline .em { color: #fff; font-weight: 400; }
+
+    .right-col {
+      border-left: 1px solid rgba(255,255,255,0.18);
+      padding-left: 40px;
+      display: flex; flex-direction: column; gap: 22px;
+    }
+    .field .v { font-size: 18px; line-height: 1.45; color: #fff; margin-top: 8px; }
+    .field .v.code { font-family: 'IBM Plex Mono', monospace; font-weight: 400; }
+
+    .preview {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px; line-height: 1.55;
+      color: rgba(255,255,255,0.78);
+      white-space: pre; margin-top: 6px;
+    }
+    .preview .ok { color: #fff; font-weight: 400; }
+    .preview .dim { color: rgba(255,255,255,0.4); }
+
+    @media print { body { background: #fff; padding: 0; min-height: 0; } .card { box-shadow: none; } }
+  </style>
+</head>
+<body>
+
+<section class="card">
+  <span class="crop tl"></span><span class="crop tr"></span>
+  <span class="crop bl"></span><span class="crop br"></span>
+
+  <div class="header">
+    <span><span class="marker"></span>K28  /  KARAN CHANDRA DEY  /  k28art.space</span>
+    <span>V0.2.0  ·  MIT  ·  PYTHON 3.10+</span>
+  </div>
+
+  <div class="body-area">
+    <div>
+      <span class="label">[ CONTEXT ENGINEERING TOOLKIT ]</span>
+      <h1 class="h0">ctxbudgeter<span style="opacity: 0.45">.</span></h1>
+      <p class="tagline">
+        Compile clean, cheap, auditable context for AI agents.<br/><br/>
+        <span class="em">Webpack</span> for agent context.<br/>
+        <span class="em">pytest</span> for prompt quality.<br/>
+        A token budget manager.
+      </p>
+    </div>
+
+    <div class="right-col">
+      <div class="field">
+        <div class="label">[ INSTALL ]</div>
+        <div class="v code">pip install ctxbudgeter</div>
+      </div>
+
+      <div class="field">
+        <div class="label">[ USE ANY FRAMEWORK ]</div>
+        <div class="v">LangGraph  ·  CrewAI<br/>OpenAI Agents SDK<br/>PydanticAI  ·  your own loop</div>
+      </div>
+
+      <div class="field">
+        <div class="label">[ COMPILE REPORT ]</div>
+<pre class="preview"><span class="dim">Included:</span>
+  - system        412 tok
+  - readme      2,086 tok
+  - diff        3,420 tok <span class="dim">required</span>
+<span class="dim">Cacheable:</span>      7,388 tok
+<span class="dim">Health:</span>         <span class="ok">92 / 100</span></pre>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span><span class="marker"></span>K28 DESIGN LAB  ·  HELPING SMEs SHIP THEIR FIRST MVP</span>
+    <span>GITHUB.COM/KAYARIYAN28/CTXBUDGETER  →</span>
+  </div>
+</section>
+
+</body>
+</html>
