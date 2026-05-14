@@ -5,7 +5,7 @@ Requires `langchain-core` (install via `pip install ctxbudgeter[langchain]`).
 
 from __future__ import annotations
 
-from typing import Any, Optional
+from typing import Any
 
 from ..compiler import CompiledPack
 
@@ -13,7 +13,7 @@ from ..compiler import CompiledPack
 def to_langchain_messages(
     pack: CompiledPack,
     *,
-    user_message: Optional[str] = None,
+    user_message: str | None = None,
 ) -> list[Any]:
     """Convert a CompiledPack into a list of langchain_core message objects.
 

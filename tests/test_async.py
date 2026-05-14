@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-from ctxbudgeter import ContextPack, Reference
-from ctxbudgeter.loaders import inline_loader
+from ctxbudgeter import ContextPack
 
 
 async def test_acompile_basic() -> None:
@@ -78,13 +77,12 @@ def test_compressor_retry_on_overshoot() -> None:
         return "small summary"
 
     pack.set_compressor(compress)
-    compiled = pack.compile()
+    pack.compile()
     assert len(calls) == 2, f"expected retry on overshoot; got {len(calls)} call(s)"
     assert calls[1] < calls[0], "retry target should be tighter than first attempt"
 
 
 def test_compressor_retry_disabled_when_config_off() -> None:
-    from ctxbudgeter import CompilerConfig
 
     pack = ContextPack(token_budget=1_500, reserved_output_tokens=500)
     pack.add(name="task", content="t", required=True)

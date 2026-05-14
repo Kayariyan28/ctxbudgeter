@@ -31,7 +31,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Optional
 
 from .compiler import CompiledPack
 
@@ -143,11 +142,11 @@ def assert_includes_in_order(pack: CompiledPack, *names: str) -> None:
     for n in names:
         try:
             new_pos = order.index(n, pos + 1)
-        except ValueError:
+        except ValueError as e:
             raise ContextAssertionError(
                 f"Expected '{n}' to appear after position {pos} in prompt order; "
                 f"order was {order}"
-            )
+            ) from e
         pos = new_pos
 
 
@@ -189,7 +188,7 @@ class GoldenPack:
         "health_breakdown",
     )
 
-    def __init__(self, path: str | Path, *, update: bool = False, keys: Optional[tuple[str, ...]] = None) -> None:
+    def __init__(self, path: str | Path, *, update: bool = False, keys: tuple[str, ...] | None = None) -> None:
         self.path = Path(path)
         self.update = update
         self.keys = keys or self.DEFAULT_KEYS

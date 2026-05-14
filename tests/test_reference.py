@@ -7,7 +7,13 @@ from pathlib import Path
 import pytest
 
 from ctxbudgeter import ContextPack, Reference
-from ctxbudgeter.loaders import file_loader, get_loader, inline_loader, list_loaders, register_loader
+from ctxbudgeter.loaders import (
+    file_loader,
+    get_loader,
+    inline_loader,
+    list_loaders,
+    register_loader,
+)
 
 
 def test_reference_resolves_inline() -> None:

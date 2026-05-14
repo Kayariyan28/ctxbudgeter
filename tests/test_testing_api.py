@@ -41,7 +41,7 @@ def test_assert_includes_passes() -> None:
 
 def test_assert_includes_fails_with_clear_message() -> None:
     compiled = _good_pack().compile()
-    with pytest.raises(ContextAssertionError, match="missing|excluded"):
+    with pytest.raises(ContextAssertionError, match=r"missing|excluded"):
         assert_includes(compiled, "nonexistent")
 
 

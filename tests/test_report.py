@@ -7,7 +7,7 @@ import json
 from ctxbudgeter import ContextPack, to_json, to_markdown, to_text
 
 
-def _compiled() -> "object":
+def _compiled() -> object:
     pack = ContextPack(model="claude-sonnet-4.6", token_budget=2_000, reserved_output_tokens=500)
     pack.add(name="sys", content="rules", kind="system", priority=100, cache_policy="stable", required=True)
     pack.add(name="task", content="do thing", kind="task", priority=95, required=True)

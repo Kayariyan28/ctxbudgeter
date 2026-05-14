@@ -13,8 +13,9 @@ clear reason. Async loaders are supported via `acompile()`.
 
 from __future__ import annotations
 
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Optional, Union
+from typing import Any, Union
 
 from .item import CachePolicy, ContextItem, ContextKind, Sensitivity
 
@@ -39,7 +40,7 @@ class Reference:
 
     name: str
     location: str
-    loader: Optional[Loader] = None
+    loader: Loader | None = None
     estimated_tokens: int = 0  # 0 = unknown; compiler will load if budget permits
     kind: ContextKind = "retrieval"
     priority: int = 50

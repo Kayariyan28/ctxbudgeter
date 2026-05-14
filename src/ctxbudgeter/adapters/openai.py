@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Optional
 
 from ..compiler import CompiledPack
 from ..content import ImageBlock, StructuredBlock, TextBlock
@@ -20,7 +19,7 @@ from ..content import ImageBlock, StructuredBlock, TextBlock
 CHAT_KINDS = {"user_message", "assistant_message", "tool_result"}
 
 
-def stable_prefix_cache_key(pack: CompiledPack) -> Optional[str]:
+def stable_prefix_cache_key(pack: CompiledPack) -> str | None:
     """Hash the stable-cache prefix into a deterministic cache key.
 
     Returns None if there's no stable prefix (no point setting a cache key for an
@@ -62,7 +61,7 @@ def _content_for_message(content: str, attachments: list) -> object:
 def to_openai_messages(
     pack: CompiledPack,
     *,
-    user_message: Optional[str] = None,
+    user_message: str | None = None,
     merge_system: bool = True,
 ) -> list[dict]:
     """Convert a CompiledPack to a list of OpenAI chat messages."""
@@ -106,9 +105,9 @@ def to_openai_messages(
 def to_openai_request(
     pack: CompiledPack,
     *,
-    user_message: Optional[str] = None,
+    user_message: str | None = None,
     merge_system: bool = True,
-    max_completion_tokens: Optional[int] = None,
+    max_completion_tokens: int | None = None,
     set_cache_key: bool = True,
 ) -> dict:
     """Return a kwargs dict suitable for ``client.chat.completions.create(**kwargs)``.

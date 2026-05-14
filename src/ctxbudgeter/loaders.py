@@ -9,15 +9,15 @@ from __future__ import annotations
 
 import glob as _glob
 import os
+from collections.abc import Callable
 from pathlib import Path
-from typing import Callable, Optional
 
 from .reference import Reference
 
 _REGISTRY: dict[str, Callable] = {}
 
 
-def register_loader(name: str, fn: Optional[Callable] = None) -> Callable:
+def register_loader(name: str, fn: Callable | None = None) -> Callable:
     """Register a loader under a short name.
 
     Two forms:

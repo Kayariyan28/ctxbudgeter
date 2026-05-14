@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from ctxbudgeter import CompilerConfig, ContextPack, SecretContentError
+from ctxbudgeter import ContextPack, SecretContentError
 from ctxbudgeter.compiler import REDACTED_PLACEHOLDER
 
 

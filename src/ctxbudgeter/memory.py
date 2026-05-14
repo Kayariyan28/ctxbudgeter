@@ -15,7 +15,6 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -38,7 +37,7 @@ class MemoryNote:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> "MemoryNote":
+    def from_dict(cls, d: dict) -> MemoryNote:
         return cls(
             key=d["key"],
             content=d["content"],
@@ -55,7 +54,7 @@ class MemoryStore(ABC):
     def write(self, note: MemoryNote) -> None: ...
 
     @abstractmethod
-    def read(self, key: str) -> Optional[MemoryNote]: ...
+    def read(self, key: str) -> MemoryNote | None: ...
 
     @abstractmethod
     def delete(self, key: str) -> bool: ...
@@ -64,10 +63,10 @@ class MemoryStore(ABC):
     def query(
         self,
         *,
-        text: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        text: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 10,
-        since: Optional[float] = None,
+        since: float | None = None,
     ) -> list[MemoryNote]: ...
 
     @abstractmethod
@@ -83,7 +82,7 @@ class InMemoryStore(MemoryStore):
     def write(self, note: MemoryNote) -> None:
         self._data[note.key] = note
 
-    def read(self, key: str) -> Optional[MemoryNote]:
+    def read(self, key: str) -> MemoryNote | None:
         return self._data.get(key)
 
     def delete(self, key: str) -> bool:
@@ -92,10 +91,10 @@ class InMemoryStore(MemoryStore):
     def query(
         self,
         *,
-        text: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        text: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 10,
-        since: Optional[float] = None,
+        since: float | None = None,
     ) -> list[MemoryNote]:
         results = list(self._data.values())
         if since is not None:
@@ -146,7 +145,7 @@ class JSONMemoryStore(MemoryStore):
         self._data[note.key] = note
         self._save()
 
-    def read(self, key: str) -> Optional[MemoryNote]:
+    def read(self, key: str) -> MemoryNote | None:
         return self._data.get(key)
 
     def delete(self, key: str) -> bool:
@@ -158,10 +157,10 @@ class JSONMemoryStore(MemoryStore):
     def query(
         self,
         *,
-        text: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        text: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 10,
-        since: Optional[float] = None,
+        since: float | None = None,
     ) -> list[MemoryNote]:
         # Delegate to InMemoryStore logic with our data
         proxy = InMemoryStore()

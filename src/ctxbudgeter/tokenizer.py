@@ -9,7 +9,6 @@ official Anthropic tokenizer requires an API call, which we deliberately avoid i
 from __future__ import annotations
 
 import math
-from typing import Optional
 
 # Model-name → tiktoken encoding mapping. Prefix match is used as fallback.
 _TIKTOKEN_ENCODINGS: dict[str, str] = {
@@ -55,11 +54,11 @@ class TokenCounter:
         n = counter.count("hello world")
     """
 
-    __slots__ = ("model", "_encoder", "_using_tiktoken")
+    __slots__ = ("_encoder", "_using_tiktoken", "model")
 
     def __init__(self, model: str = "claude-sonnet-4.6") -> None:
         self.model = model
-        self._encoder: Optional[object] = None
+        self._encoder: object | None = None
         self._using_tiktoken = False
         try:
             import tiktoken  # type: ignore[import-not-found]

@@ -7,7 +7,7 @@ makes it into the final prompt based on these fields.
 
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -66,18 +66,18 @@ class ContextItem(BaseModel):
     content: str = Field(..., description="Raw text content.")
     kind: ContextKind = Field("other", description="Semantic kind.")
     priority: int = Field(
-        50, ge=0, le=100, description="User priority 0–100 (higher = more important)."
+        50, ge=0, le=100, description="User priority 0-100 (higher = more important)."
     )
     required: bool = Field(
         False, description="If true, the compiler MUST include this item (or raise)."
     )
     freshness: float = Field(
-        1.0, ge=0.0, le=1.0, description="0–1 freshness score; 1 = brand new."
+        1.0, ge=0.0, le=1.0, description="0-1 freshness score; 1 = brand new."
     )
     relevance: float = Field(
-        0.5, ge=0.0, le=1.0, description="0–1 relevance to current task (default 0.5)."
+        0.5, ge=0.0, le=1.0, description="0-1 relevance to current task (default 0.5)."
     )
-    source: Optional[str] = Field(
+    source: str | None = Field(
         None, description="Where the content came from (file path, URL, etc.)."
     )
     cache_policy: CachePolicy = Field(
@@ -89,7 +89,7 @@ class ContextItem(BaseModel):
     compressible: bool = Field(
         False, description="May be compressed if it doesn't fit the budget."
     )
-    compressed_content: Optional[str] = Field(
+    compressed_content: str | None = Field(
         None, description="Optional pre-computed compressed form, used if original won't fit."
     )
     attachments: list[Attachment] = Field(

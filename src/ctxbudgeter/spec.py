@@ -44,7 +44,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from .compiler import CompilerConfig
 from .loaders import get_loader
@@ -100,7 +100,7 @@ _REF_KEYS = {
 }
 
 
-def load_pack(path: str | Path, *, base_dir: Optional[Path] = None) -> ContextPack:
+def load_pack(path: str | Path, *, base_dir: Path | None = None) -> ContextPack:
     """Load a pack spec from a YAML, TOML, or JSON file."""
     p = Path(path)
     if not p.exists():
@@ -122,7 +122,7 @@ def load_pack(path: str | Path, *, base_dir: Optional[Path] = None) -> ContextPa
     return build_pack(data, base_dir=base_dir or p.parent)
 
 
-def build_pack(data: dict[str, Any], *, base_dir: Optional[Path] = None) -> ContextPack:
+def build_pack(data: dict[str, Any], *, base_dir: Path | None = None) -> ContextPack:
     """Build a ContextPack from a spec dict (already parsed from YAML/TOML/JSON)."""
     if not isinstance(data, dict):
         raise SpecError("Pack spec root must be a mapping/object")

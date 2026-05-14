@@ -17,15 +17,11 @@ from __future__ import annotations
 
 import asyncio
 import inspect
-import json
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, Literal, Optional, Union
+from typing import Literal, Union
 
 from .content import (
-    Attachment,
-    ImageBlock,
-    StructuredBlock,
-    TextBlock,
     attachment_estimated_tokens,
 )
 from .item import ContextItem
@@ -67,7 +63,7 @@ class ItemDecision:
     priority: int
     required: bool
     sensitivity: str = "internal"
-    source: Optional[str] = None
+    source: str | None = None
 
 
 @dataclass
@@ -77,7 +73,7 @@ class CompilerConfig:
     weights: dict[str, float] = field(default_factory=dict)
     allow_truncation: bool = False
     truncation_marker: str = "\n... [truncated]"
-    compressor: Optional[Compressor] = None
+    compressor: Compressor | None = None
     compression_retry: bool = True
     """If True, retry compression with a tighter target when the first attempt overshoots."""
     secret_policy: SecretPolicy = "warn"
@@ -204,11 +200,11 @@ def _item_token_cost(item: ContextItem, counter: TokenCounter) -> tuple[int, int
 def _human_reason(
     kind: Literal["included", "fits", "compressed", "truncated", "excluded_size", "excluded_size_high_pri", "redacted", "ref_failed"],
     *,
-    score: Optional[float] = None,
-    orig: Optional[int] = None,
-    final: Optional[int] = None,
-    remaining: Optional[int] = None,
-    priority: Optional[int] = None,
+    score: float | None = None,
+    orig: int | None = None,
+    final: int | None = None,
+    remaining: int | None = None,
+    priority: int | None = None,
 ) -> str:
     if kind == "included":
         return "required — guaranteed inclusion"
@@ -241,7 +237,7 @@ def _try_compress_sync(
     counter: TokenCounter,
     config: CompilerConfig,
     warnings: list[str],
-) -> Optional[tuple[str, int]]:
+) -> tuple[str, int] | None:
     """Sync compression attempt with retry-on-overshoot."""
     # 1. Pre-computed compressed_content takes priority
     if item.compressed_content is not None:
@@ -291,7 +287,7 @@ async def _try_compress_async(
     counter: TokenCounter,
     config: CompilerConfig,
     warnings: list[str],
-) -> Optional[tuple[str, int]]:
+) -> tuple[str, int] | None:
     """Async-aware compression attempt. Falls back to sync path for sync compressors."""
     if item.compressed_content is not None:
         ctoks = counter.count(item.compressed_content)
@@ -634,7 +630,7 @@ def _process_required(
     counter: TokenCounter,
     config: CompilerConfig,
     *,
-    async_compress: Optional[Callable] = None,
+    async_compress: Callable | None = None,
 ) -> None:
     """Process required items with compress/truncate fallbacks. Mutates state."""
     for item in items:
@@ -886,9 +882,9 @@ def compile_items(
     model: str,
     token_budget: int,
     reserved_output_tokens: int,
-    config: Optional[CompilerConfig] = None,
-    counter: Optional[TokenCounter] = None,
-    references: Optional[list[Reference]] = None,
+    config: CompilerConfig | None = None,
+    counter: TokenCounter | None = None,
+    references: list[Reference] | None = None,
 ) -> CompiledPack:
     """Synchronous compilation. Async loaders/compressors → use `acompile_items`."""
     if token_budget <= 0:
@@ -927,9 +923,9 @@ async def acompile_items(
     model: str,
     token_budget: int,
     reserved_output_tokens: int,
-    config: Optional[CompilerConfig] = None,
-    counter: Optional[TokenCounter] = None,
-    references: Optional[list[Reference]] = None,
+    config: CompilerConfig | None = None,
+    counter: TokenCounter | None = None,
+    references: list[Reference] | None = None,
 ) -> CompiledPack:
     """Async compilation. Resolves async References concurrently; supports async compressors."""
     if token_budget <= 0:

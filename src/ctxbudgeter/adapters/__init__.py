@@ -13,12 +13,12 @@ from .openai import stable_prefix_cache_key, to_openai_messages, to_openai_reque
 from .pydantic_ai import to_pydantic_ai, to_pydantic_ai_deps
 
 __all__ = [
-    "to_openai_messages",
-    "to_openai_request",
     "stable_prefix_cache_key",
     "to_anthropic_messages",
     "to_anthropic_request",
     "to_langchain_messages",
-    "to_pydantic_ai_deps",
+    "to_openai_messages",
+    "to_openai_request",
     "to_pydantic_ai",  # deprecated alias
+    "to_pydantic_ai_deps",
 ]

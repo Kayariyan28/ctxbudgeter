@@ -7,8 +7,6 @@ explainable — every component is exposed so callers can override weights.
 
 from __future__ import annotations
 
-from typing import Optional
-
 from .item import ContextItem
 
 DEFAULT_WEIGHTS: dict[str, float] = {
@@ -21,7 +19,7 @@ DEFAULT_WEIGHTS: dict[str, float] = {
 
 
 def _cache_value(item: ContextItem) -> float:
-    """0–1 value for the cache component: stable > ephemeral > dynamic."""
+    """0-1 value for the cache component: stable > ephemeral > dynamic."""
     if item.cache_policy == "stable":
         return 1.0
     if item.cache_policy == "ephemeral":
@@ -33,7 +31,7 @@ def score_item(
     item: ContextItem,
     token_count: int,
     available_tokens: int,
-    weights: Optional[dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
 ) -> float:
     """Return a deterministic ranking score for an optional item.
 

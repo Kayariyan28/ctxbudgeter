@@ -13,8 +13,9 @@ Typical flow:
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, Callable, Iterator, Optional
+from typing import Any
 
 from .compiler import (
     CompiledPack,
@@ -65,13 +66,13 @@ class ContextPack:
         required: bool = False,
         freshness: float = 1.0,
         relevance: float = 0.5,
-        source: Optional[str] = None,
+        source: str | None = None,
         cache_policy: CachePolicy = "dynamic",
         sensitivity: Sensitivity = "internal",
         compressible: bool = False,
-        compressed_content: Optional[str] = None,
-        attachments: Optional[list[Attachment]] = None,
-        metadata: Optional[dict[str, Any]] = None,
+        compressed_content: str | None = None,
+        attachments: list[Attachment] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ContextItem:
         item = ContextItem(
             name=name,
@@ -100,7 +101,7 @@ class ContextPack:
         self,
         path: str | Path,
         *,
-        name: Optional[str] = None,
+        name: str | None = None,
         priority: int = 50,
         kind: ContextKind = "project_doc",
         required: bool = False,
@@ -128,7 +129,7 @@ class ContextPack:
         name: str,
         location: str,
         *,
-        loader: Optional[Loader] = None,
+        loader: Loader | None = None,
         estimated_tokens: int = 0,
         priority: int = 50,
         kind: ContextKind = "retrieval",
@@ -138,7 +139,7 @@ class ContextPack:
         compressible: bool = True,
         relevance: float = 0.5,
         freshness: float = 1.0,
-        metadata: Optional[dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Reference:
         """Add a lazy Reference. The loader runs at compile time only if the
         reference could plausibly fit the budget."""
@@ -170,8 +171,8 @@ class ContextPack:
         self,
         store: MemoryStore,
         *,
-        query: Optional[str] = None,
-        tags: Optional[list[str]] = None,
+        query: str | None = None,
+        tags: list[str] | None = None,
         limit: int = 5,
         kind: ContextKind = "memory",
         priority: int = 50,
@@ -209,13 +210,13 @@ class ContextPack:
         self.references = [r for r in self.references if r.name != name]
         return (len(self.items) + len(self.references)) < before
 
-    def get(self, name: str) -> Optional[ContextItem]:
+    def get(self, name: str) -> ContextItem | None:
         for it in self.items:
             if it.name == name:
                 return it
         return None
 
-    def get_reference(self, name: str) -> Optional[Reference]:
+    def get_reference(self, name: str) -> Reference | None:
         for r in self.references:
             if r.name == name:
                 return r
@@ -226,12 +227,12 @@ class ContextPack:
     def fork(
         self,
         *,
-        filter: Optional[Callable[[ContextItem], bool]] = None,
-        ref_filter: Optional[Callable[[Reference], bool]] = None,
-        token_budget: Optional[int] = None,
-        reserved_output_tokens: Optional[int] = None,
-        model: Optional[str] = None,
-    ) -> "ContextPack":
+        filter: Callable[[ContextItem], bool] | None = None,
+        ref_filter: Callable[[Reference], bool] | None = None,
+        token_budget: int | None = None,
+        reserved_output_tokens: int | None = None,
+        model: str | None = None,
+    ) -> ContextPack:
         """Create a new pack with a filtered subset of items + references.
 
         Use this to isolate a subagent's context — give it only the items it needs,
@@ -263,12 +264,12 @@ class ContextPack:
         )
         return child
 
-    def subset_by_kind(self, *kinds: ContextKind) -> "ContextPack":
+    def subset_by_kind(self, *kinds: ContextKind) -> ContextPack:
         """Convenience fork: keep only items of the given kinds."""
         kindset = set(kinds)
         return self.fork(filter=lambda it: it.kind in kindset)
 
-    def subset_by_namespace(self, namespace: str) -> "ContextPack":
+    def subset_by_namespace(self, namespace: str) -> ContextPack:
         """Convenience fork: keep only items whose metadata['namespace'] matches."""
         return self.fork(
             filter=lambda it: it.metadata.get("namespace") == namespace,

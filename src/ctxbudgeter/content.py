@@ -11,7 +11,7 @@ non-compressible cost (you don't shrink an image by changing the prompt).
 
 from __future__ import annotations
 
-from typing import Annotated, Any, Literal, Optional, Union
+from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -32,9 +32,9 @@ class ImageBlock(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     type: Literal["image"] = "image"
-    url: Optional[str] = Field(None, description="Public URL (http/https) or data URL.")
-    base64: Optional[str] = Field(None, description="Base64-encoded image bytes (without data: prefix).")
-    media_type: Optional[str] = Field(None, description='MIME type, e.g. "image/png".')
+    url: str | None = Field(None, description="Public URL (http/https) or data URL.")
+    base64: str | None = Field(None, description="Base64-encoded image bytes (without data: prefix).")
+    media_type: str | None = Field(None, description='MIME type, e.g. "image/png".')
     detail: Literal["auto", "low", "high"] = Field("auto", description="Vendor-specific detail hint.")
     estimated_tokens: int = Field(85, ge=0, description="Estimated token cost.")
 
@@ -45,7 +45,7 @@ class StructuredBlock(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
     type: Literal["structured"] = "structured"
-    schema_name: Optional[str] = Field(None, description='Optional name, e.g. tool name "search_db".')
+    schema_name: str | None = Field(None, description='Optional name, e.g. tool name "search_db".')
     data: dict[str, Any] = Field(default_factory=dict)
     estimated_tokens: int = Field(0, ge=0, description="If 0, tokenizer counts the JSON-serialized form.")
 
@@ -57,7 +57,7 @@ Attachment = Annotated[
 """Discriminated union of attachment block types. Use the `type` field to dispatch."""
 
 
-def attachment_estimated_tokens(att: Attachment, *, tokenizer_count: Optional[callable] = None) -> int:
+def attachment_estimated_tokens(att: Attachment, *, tokenizer_count: callable | None = None) -> int:
     """Return the budgeted token cost for a single attachment.
 
     For TextBlock: prefers the user override; otherwise asks tokenizer_count.

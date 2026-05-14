@@ -12,7 +12,6 @@ prefix from a single breakpoint.
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from ..compiler import CompiledPack
 from ..content import ImageBlock, StructuredBlock, TextBlock
@@ -51,7 +50,7 @@ def _attachments_to_blocks(content: str, attachments: list) -> list[dict]:
 def to_anthropic_messages(
     pack: CompiledPack,
     *,
-    user_message: Optional[str] = None,
+    user_message: str | None = None,
 ) -> dict:
     """Convert a CompiledPack to Anthropic Messages API input."""
     system_blocks: list[dict] = []
@@ -112,8 +111,8 @@ def to_anthropic_messages(
 def to_anthropic_request(
     pack: CompiledPack,
     *,
-    user_message: Optional[str] = None,
-    max_tokens: Optional[int] = None,
+    user_message: str | None = None,
+    max_tokens: int | None = None,
 ) -> dict:
     """Return a kwargs dict for ``client.messages.create(**kwargs)``."""
     payload = to_anthropic_messages(pack, user_message=user_message)
