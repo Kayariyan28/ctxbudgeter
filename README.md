@@ -10,6 +10,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml/badge.svg)](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml)
 
+> **If ctxbudgeter saved you tokens, time, or a 3am incident — drop a ⭐ on the [repo](https://github.com/Kayariyan28/ctxbudgeter). It's the fuel for me to keep shipping v0.3 features.**
+
 > Compile clean, cheap, auditable context for AI agents.
 
 `ctxbudgeter` is a framework-agnostic **context engineering toolkit** for agentic AI. Hand it the raw materials — system rules, docs, code, memory notes, tool results, the latest user request — and it decides what enters the model, what gets dropped, what gets compressed, what should be cached, and **why**. Every decision is auditable. Every compilation is deterministic. Tests can gate on context the same way they gate on code.
