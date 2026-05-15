@@ -6,8 +6,14 @@
 
 [![PyPI](https://img.shields.io/pypi/v/ctxbudgeter.svg)](https://pypi.org/project/ctxbudgeter/)
 [![Python](https://img.shields.io/pypi/pyversions/ctxbudgeter.svg)](https://pypi.org/project/ctxbudgeter/)
+[![Downloads](https://static.pepy.tech/badge/ctxbudgeter)](https://pepy.tech/projects/ctxbudgeter)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml/badge.svg)](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml)
+
+![PyPI version](https://badge.fury.io/py/ctxbudgeter.svg)
+![Python](https://img.shields.io/pypi/pyversions/ctxbudgeter)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen)
 
 > Compile clean, cheap, auditable context for AI agents.
 
