@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/banner.png" alt="ctxbudgeter — context compiler for agentic AI" width="100%" />
+  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/banner.png?v=0.3.0" alt="ctxbudgeter — ContextOps toolkit for AI agents" width="100%" />
 </p>
 
 # ctxbudgeter
