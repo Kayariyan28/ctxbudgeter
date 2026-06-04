@@ -20,6 +20,8 @@ Quick start::
 from __future__ import annotations
 
 from . import adapters, loaders
+from .bom import BOMItem, ContextBOM
+from .cache import CachePlan, CachePlanner
 from .compiler import (
     BudgetExceededError,
     CompiledPack,
@@ -33,40 +35,65 @@ from .compiler import (
     compiled_pack_from_dict,
 )
 from .content import Attachment, ImageBlock, StructuredBlock, TextBlock
+from .diff import ContextDiff
+from .evals import ContextEval, EvalResult, EvalSuite
+from .governance import PolicyViolationError, enforce_policy
 from .item import CachePolicy, ContextItem, ContextKind, Sensitivity
+from .mcp import MCPToolBudgeter
 from .memory import InMemoryStore, JSONMemoryStore, MemoryNote, MemoryStore
 from .pack import ContextPack
+from .policy import ContextPolicy, PolicyViolation
+from .provenance import ContextProvenance
 from .reference import AsyncLoader, Loader, Reference, SyncLoader
 from .report import to_json, to_markdown, to_text
+from .scanner import ContextScanner, Finding, ScanResult
 from .scoring import DEFAULT_WEIGHTS, score_item
 from .tokenizer import TokenCounter
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "DEFAULT_WEIGHTS",
     "AsyncLoader",
     # multimodal
     "Attachment",
+    "BOMItem",
     "BudgetExceededError",
+    "CachePlan",
+    "CachePlanner",
     "CachePolicy",
     "CompiledPack",
     "CompilerConfig",
     "Compressor",
+    # ContextOps: audit & analysis
+    "ContextBOM",
+    "ContextDiff",
+    "ContextEval",
     # core
     "ContextItem",
     "ContextKind",
     "ContextPack",
+    # ContextOps: governance & scanning
+    "ContextPolicy",
+    "ContextProvenance",
+    "ContextScanner",
+    "EvalResult",
+    "EvalSuite",
+    "Finding",
     "ImageBlock",
     "InMemoryStore",
     "ItemDecision",
     "JSONMemoryStore",
     "Loader",
+    "MCPToolBudgeter",
     "MemoryNote",
     # memory (Write strategy)
     "MemoryStore",
+    "PolicyViolation",
+    "PolicyViolationError",
     # references (just-in-time loading)
     "Reference",
+    "ScanResult",
     "SecretContentError",
     "SecretPolicy",
     "Sensitivity",
@@ -81,6 +108,7 @@ __all__ = [
     "adapters",
     "compile_items",
     "compiled_pack_from_dict",
+    "enforce_policy",
     "loaders",
     "score_item",
     "to_json",

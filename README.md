@@ -12,11 +12,53 @@
 
 > **If ctxbudgeter saved you tokens, time, or a 3am incident — drop a ⭐ on the [repo](https://github.com/Kayariyan28/ctxbudgeter). It's the fuel for me to keep shipping v0.3 features.**
 
-> Compile clean, cheap, auditable context for AI agents.
+> **ctxbudgeter helps AI agents know what to know.**
 
-`ctxbudgeter` is a framework-agnostic **context engineering toolkit** for agentic AI. Hand it the raw materials — system rules, docs, code, memory notes, tool results, the latest user request — and it decides what enters the model, what gets dropped, what gets compressed, what should be cached, and **why**. Every decision is auditable. Every compilation is deterministic. Tests can gate on context the same way they gate on code.
+ctxbudgeter is a **ContextOps toolkit for production AI agents**. It compiles, audits,
+governs, visualizes, and optimizes LLM context *before every model call* — so your
+agents control token budgets, reduce context waste, detect risky context, preserve
+provenance, improve prompt-cache layout, and produce auditable Context Bills of Materials.
 
-**Use any agent framework.** ctxbudgeter sits in front of LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI, Microsoft Agent Framework, or your own loop. It does one thing: make the context you send to the model cleaner, cheaper, and assertable.
+**ctxbudgeter is not an agent framework. It works *before* the model call.**
+It sits in front of LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI, Microsoft Agent
+Framework, or your own loop.
+
+> Agent observability tools show what the agent *did*. ctxbudgeter shows what the agent
+> was *allowed to know* before it acted.
+
+```text
+ContextOps · token budgets · policy governance · PII/secret scanning ·
+Context Bill of Materials · context diffing · Context MRI · MCP tool budgeting
+```
+
+## ContextOps in 30 seconds
+
+```python
+from ctxbudgeter import ContextPack, ContextPolicy
+
+policy = ContextPolicy(max_tokens=24_000, reserved_output_tokens=4_000,
+                       block_secrets=True, forbidden_sources=[".env"], redact_sensitive=True)
+
+pack = ContextPack(model="claude-sonnet-4.6", policy=policy)
+pack.add(name="system", content="You are a careful agent.", kind="system",
+         required=True, cache_policy="stable", source="repo/system.md", trust_level="verified")
+pack.add(name="task", content="Resolve the refund request.", kind="task", required=True)
+
+compiled = pack.compile(task="Resolve refund request")
+print(compiled.report())          # what entered, what didn't, and why
+bom = compiled.bom                 # auditable Bill of Materials
+bom.to_json("context_bom.json")   # commit + diff in CI
+
+from ctxbudgeter.viz import ContextMRI          # pip install "ctxbudgeter[viz]"
+ContextMRI.from_compiled(compiled).export_html("context_mri.html")
+```
+
+New in **0.3 (ContextOps)**: `ContextPolicy`, `ContextScanner`, `ContextProvenance`,
+`ContextBOM`, `ContextDiff`, `CachePlanner`, `ContextEval`, `MCPToolBudgeter`, and the
+**Context MRI** visualization. See [`docs/contextops.md`](docs/contextops.md). Fully
+backward compatible with the 0.2 API. Deep-dive docs: [BOM](docs/context_bom.md) ·
+[Context MRI](docs/context_mri.md) · [MCP budgeting](docs/mcp_tool_budgeting.md) ·
+[security](docs/security.md).
 
 ```text
 Webpack for agent context  •  pytest for prompt/context quality  •  token budget manager

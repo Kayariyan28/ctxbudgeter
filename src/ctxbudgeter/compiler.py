@@ -107,6 +107,13 @@ class CompiledPack:
     """Sensitivity flags, compression overshoots, loader failures — anything a
     human reviewer would want to see before signing off."""
 
+    # --- ContextOps governance metadata (populated when a policy/scan is applied) ---
+    task: str | None = None
+    policy_summary: dict | None = None
+    policy_violations: list[dict] = field(default_factory=list)
+    scanner_findings: list[dict] = field(default_factory=list)
+    item_risk: dict[str, str] = field(default_factory=dict)
+
     @property
     def available_tokens(self) -> int:
         return self.token_budget - self.reserved_output_tokens
@@ -149,6 +156,60 @@ class CompiledPack:
             return _report.to_json(self)
         return _report.to_text(self)
 
+    @property
+    def bom(self):
+        """Build a Context Bill of Materials from this compiled pack.
+
+        Returns a ``ctxbudgeter.bom.ContextBOM``. Pulls policy summary, violations,
+        scanner findings, and per-item risk if a policy/scan was applied.
+        """
+        from .bom import ContextBOM
+
+        return ContextBOM.from_compiled(self)
+
+    def cache_plan(self):
+        """Analyze cache layout. Returns a ``ctxbudgeter.cache.CachePlan``."""
+        from .cache import CachePlanner
+
+        return CachePlanner().analyze(self)
+
+    # ----- framework adapters (thin instance methods over the adapter functions) ---
+
+    def to_openai_messages(self, **kwargs) -> list[dict]:
+        from .adapters.openai import to_openai_messages
+
+        return to_openai_messages(self, **kwargs)
+
+    def to_anthropic_messages(self, **kwargs) -> dict:
+        from .adapters.anthropic import to_anthropic_messages
+
+        return to_anthropic_messages(self, **kwargs)
+
+    def to_langchain_messages(self, **kwargs):
+        from .adapters.langchain import to_langchain_messages
+
+        return to_langchain_messages(self, **kwargs)
+
+    def to_openai_agents_input(self, **kwargs) -> dict:
+        from .adapters.openai_agents import to_openai_agents_input
+
+        return to_openai_agents_input(self, **kwargs)
+
+    def to_langgraph_state(self, **kwargs) -> dict:
+        from .adapters.langgraph import to_langgraph_state
+
+        return to_langgraph_state(self, **kwargs)
+
+    def to_pydantic_ai_context(self, **kwargs) -> dict:
+        from .adapters.pydantic_ai import to_pydantic_ai_deps
+
+        return to_pydantic_ai_deps(self, **kwargs)
+
+    def to_crewai_context(self, **kwargs) -> dict:
+        from .adapters.crewai import to_crewai_context
+
+        return to_crewai_context(self, **kwargs)
+
     def to_dict(self) -> dict:
         return {
             "model": self.model,
@@ -162,6 +223,11 @@ class CompiledPack:
             "health_breakdown": dict(self.health_breakdown),
             "tokenizer_backend": self.tokenizer_backend,
             "warnings": list(self.warnings),
+            "task": self.task,
+            "policy_summary": self.policy_summary,
+            "policy_violations": list(self.policy_violations),
+            "scanner_findings": list(self.scanner_findings),
+            "item_risk": dict(self.item_risk),
             "decisions": [
                 {
                     "name": d.name,

@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ctxbudgeter"
-version = "0.2.0"
-description = "Context compiler for agentic AI: compile clean, cheap, auditable context under a token budget. Framework-agnostic. Local-first. Deterministic."
+version = "0.3.0"
+description = "ContextOps toolkit for production AI agents: compile, audit, govern, visualize, and optimize LLM context before every model call. Token budgets, policy governance, PII/secret scanning, Context Bill of Materials, context diffing, Context MRI, and MCP tool budgeting. Framework-agnostic. Local-first. Deterministic."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
@@ -16,14 +16,19 @@ maintainers = [
     { name = "Karan Chandra Dey", email = "karandey3@outlook.com" },
 ]
 keywords = [
-    "llm",
-    "agents",
     "context-engineering",
-    "context",
-    "prompt",
+    "contextops",
+    "agentic-ai",
+    "ai-agents",
+    "llm",
     "prompt-engineering",
     "token-budget",
     "prompt-caching",
+    "mcp",
+    "observability",
+    "pii-detection",
+    "secrets-scanning",
+    "governance",
     "anthropic",
     "openai",
     "langchain",
@@ -65,6 +70,12 @@ openai = ["openai>=1.0"]
 langchain = ["langchain-core>=0.1"]
 yaml = ["PyYAML>=6.0"]
 http = ["requests>=2.28"]
+viz = [
+    "jinja2>=3.0",
+    "plotly>=5.0",
+    "networkx>=3.0",
+    "rich>=13.0",
+]
 all = [
     "tiktoken>=0.5",
     "anthropic>=0.30",
@@ -72,6 +83,10 @@ all = [
     "langchain-core>=0.1",
     "PyYAML>=6.0",
     "requests>=2.28",
+    "jinja2>=3.0",
+    "plotly>=5.0",
+    "networkx>=3.0",
+    "rich>=13.0",
 ]
 dev = [
     "pytest>=7.0",
@@ -81,6 +96,8 @@ dev = [
     "PyYAML>=6.0",
     "ruff>=0.1",
     "mypy>=1.5",
+    "build>=1.0",
+    "twine>=4.0",
 ]
 
 [project.scripts]
@@ -125,6 +142,7 @@ ignore = [
     "B008",   # function call in default arg — Typer requires this idiom
     "UP007",  # Union → | — keep readability for very long unions
     "N818",   # error suffix on exceptions — keep BudgetExceededError naming
+    "N812",   # `_html as H` — deliberate, readable alias across viz modules
 ]
 
 [tool.mypy]

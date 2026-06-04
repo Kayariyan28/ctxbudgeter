@@ -1,0 +1,20 @@
+# Example ctxbudgeter policy. Load with ContextPolicy.from_yaml("ctxbudgeter.yaml")
+# or pass to the CLI: ctxbudgeter compile . --task "..." --policy ctxbudgeter.yaml
+max_tokens: 24000
+reserved_output_tokens: 4000
+block_pii: false
+block_secrets: true
+require_provenance: false
+cache_stable_prefix: true
+redact_sensitive: true
+allow_untrusted_sources: true
+max_age_days: 90
+allowed_sources:
+  - docs
+  - tickets
+  - repo
+forbidden_sources:
+  - .env
+  - private_keys
+  - payroll
+fail_on_policy_violation: false

@@ -27,6 +27,8 @@ from .compiler import (
 from .content import Attachment
 from .item import CachePolicy, ContextItem, ContextKind, Sensitivity
 from .memory import MemoryStore
+from .policy import ContextPolicy
+from .provenance import ContextProvenance
 from .reference import Loader, Reference
 from .tokenizer import TokenCounter
 
@@ -40,6 +42,7 @@ class ContextPack:
         model: str = "claude-sonnet-4.6",
         token_budget: int = 200_000,
         reserved_output_tokens: int = 4_000,
+        policy: ContextPolicy | None = None,
     ) -> None:
         if token_budget <= 0:
             raise ValueError("token_budget must be > 0")
@@ -53,6 +56,9 @@ class ContextPack:
         self.items: list[ContextItem] = []
         self.references: list[Reference] = []
         self._config: CompilerConfig = CompilerConfig()
+        self._policy: ContextPolicy | None = None
+        if policy is not None:
+            self.set_policy(policy)
 
     # ----- adding items ---------------------------------------------------------
 
@@ -72,6 +78,8 @@ class ContextPack:
         compressible: bool = False,
         compressed_content: str | None = None,
         attachments: list[Attachment] | None = None,
+        provenance: ContextProvenance | None = None,
+        trust_level: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> ContextItem:
         item = ContextItem(
@@ -88,6 +96,8 @@ class ContextPack:
             compressible=compressible,
             compressed_content=compressed_content,
             attachments=attachments or [],
+            provenance=provenance,
+            trust_level=trust_level,
             metadata=metadata or {},
         )
         return self.add_item(item)
@@ -289,14 +299,26 @@ class ContextPack:
         """Set sensitivity enforcement: 'allow' | 'warn' | 'refuse' | 'redact'."""
         self._config.secret_policy = policy  # type: ignore[assignment]
 
+    def set_policy(self, policy: ContextPolicy) -> None:
+        """Attach a ContextPolicy. The policy governs the token budget and is
+        enforced (PII/secret scanning, source allow/deny, provenance, age) during
+        compile(). The policy's max_tokens/reserved_output_tokens become authoritative."""
+        self._policy = policy
+        self.token_budget = policy.max_tokens
+        self.reserved_output_tokens = policy.reserved_output_tokens
+
+    @property
+    def policy(self) -> ContextPolicy | None:
+        return self._policy
+
     @property
     def config(self) -> CompilerConfig:
         return self._config
 
     # ----- compilation ----------------------------------------------------------
 
-    def compile(self) -> CompiledPack:
-        return compile_items(
+    def compile(self, task: str | None = None) -> CompiledPack:
+        compiled = compile_items(
             list(self.items),
             model=self.model,
             token_budget=self.token_budget,
@@ -305,9 +327,15 @@ class ContextPack:
             counter=TokenCounter(self.model),
             references=list(self.references),
         )
+        compiled.task = task
+        if self._policy is not None:
+            from .governance import enforce_policy
 
-    async def acompile(self) -> CompiledPack:
-        return await acompile_items(
+            enforce_policy(compiled, self._policy, model=self.model)
+        return compiled
+
+    async def acompile(self, task: str | None = None) -> CompiledPack:
+        compiled = await acompile_items(
             list(self.items),
             model=self.model,
             token_budget=self.token_budget,
@@ -316,6 +344,12 @@ class ContextPack:
             counter=TokenCounter(self.model),
             references=list(self.references),
         )
+        compiled.task = task
+        if self._policy is not None:
+            from .governance import enforce_policy
+
+            enforce_policy(compiled, self._policy, model=self.model)
+        return compiled
 
     def preview(self) -> CompiledPack:
         """Alias for compile() — kept for API symmetry with `estimate_tokens()`.

@@ -12,6 +12,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .content import Attachment
+from .provenance import ContextProvenance
 
 ContextKind = Literal[
     "system",
@@ -60,7 +61,9 @@ callers can audit what's about to be sent to an external model."""
 class ContextItem(BaseModel):
     """A single, addressable piece of context."""
 
-    model_config = ConfigDict(extra="forbid", validate_assignment=True)
+    model_config = ConfigDict(
+        extra="forbid", validate_assignment=True, arbitrary_types_allowed=True
+    )
 
     name: str = Field(..., min_length=1, description="Unique name within a pack.")
     content: str = Field(..., description="Raw text content.")
@@ -96,9 +99,30 @@ class ContextItem(BaseModel):
         default_factory=list,
         description="Optional multi-modal blocks (images, structured tool schemas).",
     )
+    provenance: ContextProvenance | None = Field(
+        default=None,
+        description="Optional provenance metadata (source, trust, age, transformations).",
+    )
+    trust_level: str | None = Field(
+        default=None,
+        description="Convenience trust override: unknown | low | internal | verified. "
+        "If set and no provenance object exists, a minimal one is derived at access time.",
+    )
     metadata: dict[str, Any] = Field(
         default_factory=dict, description="User-defined metadata; not interpreted by the compiler."
     )
+
+    def effective_provenance(self) -> ContextProvenance | None:
+        """Return provenance, synthesizing a minimal record from source/trust_level
+        if no explicit provenance object was supplied."""
+        if self.provenance is not None:
+            return self.provenance
+        if self.source is not None or self.trust_level is not None:
+            return ContextProvenance(
+                source=self.source,
+                trust_level=self.trust_level or "unknown",  # type: ignore[arg-type]
+            )
+        return None
 
     @field_validator("name")
     @classmethod

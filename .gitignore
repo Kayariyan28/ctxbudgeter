@@ -42,3 +42,6 @@ marketing/
 
 # Local agent-generated golden snapshot fixtures
 .ctxbudgeter/
+
+# Example-generated artifacts
+examples/out/

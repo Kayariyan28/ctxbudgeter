@@ -143,6 +143,15 @@ def compile_cmd(
         "warn", "--secret-policy",
         help="How to handle sensitivity='secret' items: allow | warn | refuse | redact.",
     ),
+    policy_file: Path | None = typer.Option(
+        None, "--policy", help="ContextPolicy YAML/JSON (ctxbudgeter.yaml). Governs the compile."
+    ),
+    bom_out: Path | None = typer.Option(
+        None, "--bom", help="Write a Context Bill of Materials JSON to this path."
+    ),
+    report_out: Path | None = typer.Option(
+        None, "--report", help="Write a Markdown context report to this path."
+    ),
 ) -> None:
     """Compile context from a directory + task, print a report."""
     if not path.exists():
@@ -152,7 +161,19 @@ def compile_cmd(
         console.print(f"[red]error:[/red] format must be text | markdown | json (got {format!r})")
         raise typer.Exit(code=2)
 
-    pack = ContextPack(model=model, token_budget=budget, reserved_output_tokens=reserved_output)
+    policy = None
+    if policy_file is not None:
+        from .policy import ContextPolicy
+
+        if not policy_file.exists():
+            console.print(f"[red]error:[/red] policy file not found: {policy_file}")
+            raise typer.Exit(code=2)
+        policy = ContextPolicy.from_yaml(str(policy_file))
+
+    if policy is not None:
+        pack = ContextPack(model=model, policy=policy)
+    else:
+        pack = ContextPack(model=model, token_budget=budget, reserved_output_tokens=reserved_output)
     pack.set_secret_policy(secret_policy)
     if system is not None:
         pack.add(
@@ -180,7 +201,7 @@ def compile_cmd(
         except ValueError:
             continue
 
-    compiled = pack.compile()
+    compiled = pack.compile(task=task)
     rendered = (
         to_markdown(compiled) if format == "markdown"
         else to_json(compiled) if format == "json"
@@ -198,6 +219,12 @@ def compile_cmd(
     if save_pack is not None:
         save_pack.write_text(to_json(compiled))
         console.print(f"[green]Pack saved:[/green] {save_pack}")
+    if bom_out is not None:
+        compiled.bom.to_json(str(bom_out))
+        console.print(f"[green]BOM written:[/green] {bom_out}")
+    if report_out is not None:
+        compiled.bom.to_markdown(str(report_out))
+        console.print(f"[green]Report (markdown) written:[/green] {report_out}")
 
 
 @app.command()
@@ -443,6 +470,316 @@ def _render_from_dict(data: dict, *, markdown: bool) -> str:
     lines.append(f"Context health score: {data.get('health_score', 0)}/100")
     lines.append(f"Tokenizer: {data.get('tokenizer_backend', 'unknown')}")
     return "\n".join(lines)
+
+
+# ============================================================================
+# ContextOps commands (v0.3): scan-risk, bom, diff, eval, cache-plan, viz,
+# viz-diff, mcp-audit, mcp-select, mcp-viz
+# ============================================================================
+
+
+@app.command("scan-risk")
+def scan_risk_cmd(
+    path: Path = typer.Argument(..., help="File or directory to scan for PII/secrets."),
+    json_out: bool = typer.Option(False, "--json", help="Emit JSON instead of a table."),
+    markdown: bool = typer.Option(False, "--markdown", help="Emit Markdown."),
+    out: Path | None = typer.Option(None, "--out", "-o", help="Write output to a file."),
+    ignore: list[str] = typer.Option(DEFAULT_IGNORE, "--ignore"),
+    max_files: int = typer.Option(200, "--max-files"),
+) -> None:
+    """Scan files for PII and secrets (local-first, masked previews only)."""
+    from .scanner import ContextScanner
+
+    if not path.exists():
+        console.print(f"[red]error:[/red] path does not exist: {path}")
+        raise typer.Exit(code=2)
+    scanner = ContextScanner()
+    targets = [path] if path.is_file() else _walk(path, set(ignore), max_files)
+
+    file_results: list[dict] = []
+    for f in targets:
+        try:
+            res = scanner.scan_file(f)
+        except OSError:
+            continue
+        if res.findings:
+            file_results.append({"path": str(f), **res.to_dict()})
+
+    if json_out:
+        text = json.dumps({"scanned": len(targets), "files_with_findings": file_results}, indent=2)
+        _emit(text, out)
+        return
+    if markdown:
+        lines = ["# Risk Scan", "", f"Scanned {len(targets)} file(s).", ""]
+        for fr in file_results:
+            lines.append(f"## `{fr['path']}` — risk: **{fr['risk_level']}**")
+            for fnd in fr["findings"]:
+                lines.append(f"- [{fnd['severity']}] {fnd['category']}: `{fnd['matched_preview']}`")
+            lines.append("")
+        _emit("\n".join(lines), out)
+        return
+
+    if not file_results:
+        console.print(f"[green]✓[/green] No PII/secret findings across {len(targets)} file(s).")
+        return
+    table = Table(title=f"risk scan: {path}")
+    table.add_column("File", overflow="fold")
+    table.add_column("Risk")
+    table.add_column("Category")
+    table.add_column("Severity")
+    table.add_column("Preview (masked)")
+    for fr in file_results:
+        for fnd in fr["findings"]:
+            table.add_row(fr["path"], fr["risk_level"], fnd["category"], fnd["severity"], fnd["matched_preview"])
+    console.print(table)
+    console.print(f"\n[bold]{len(file_results)}[/bold] file(s) with findings out of {len(targets)} scanned.")
+
+
+@app.command()
+def bom(
+    input: Path = typer.Argument(..., help="A saved compiled-pack JSON (from `compile --save-pack`) or a BOM JSON."),
+    format: str = typer.Option("markdown", "--format", "-f", help="json | markdown."),
+    out: Path | None = typer.Option(None, "--out", "-o"),
+) -> None:
+    """Render a Context Bill of Materials from a compiled-pack or BOM JSON file."""
+    from .bom import ContextBOM
+    from .compiler import compiled_pack_from_dict
+
+    if not input.exists():
+        console.print(f"[red]error:[/red] file does not exist: {input}")
+        raise typer.Exit(code=2)
+    data = json.loads(input.read_text(encoding="utf-8"))
+    if "included_items" in data and "schema_version" in data:
+        bom_obj = ContextBOM.from_dict(data)
+    elif "decisions" in data:
+        bom_obj = ContextBOM.from_compiled(compiled_pack_from_dict(data))
+        console.print(
+            "[yellow]note:[/yellow] input is a compiled-pack snapshot; item details are "
+            "limited. For full fidelity, produce a BOM with `compile --bom out.json`.",
+            stderr=True,
+        )
+    else:
+        console.print("[red]error:[/red] unrecognized input; expected a BOM or compiled-pack JSON.")
+        raise typer.Exit(code=2)
+    text = bom_obj.to_json() if format == "json" else bom_obj.to_markdown()
+    _emit(text, out)
+
+
+@app.command()
+def diff(
+    old_bom: Path = typer.Argument(..., help="Old BOM JSON."),
+    new_bom: Path = typer.Argument(..., help="New BOM JSON."),
+    format: str = typer.Option("text", "--format", "-f", help="text | json | markdown."),
+    out: Path | None = typer.Option(None, "--out", "-o"),
+    fail_on_risk_increase: bool = typer.Option(
+        False, "--fail-on-risk-increase", help="Exit non-zero if risk score increased."
+    ),
+) -> None:
+    """Diff two Context Bills of Materials."""
+    from .diff import ContextDiff
+
+    for p in (old_bom, new_bom):
+        if not p.exists():
+            console.print(f"[red]error:[/red] file does not exist: {p}")
+            raise typer.Exit(code=2)
+    d = ContextDiff.compare(str(old_bom), str(new_bom))
+    text = (
+        d.to_json() if format == "json"
+        else d.to_markdown() if format == "markdown"
+        else d.to_text()
+    )
+    _emit(text, out)
+    if fail_on_risk_increase and d.risk_increased:
+        console.print(f"[red]Risk increased by {d.risk_change}[/red]")
+        raise typer.Exit(code=1)
+
+
+@app.command("eval")
+def eval_cmd(
+    suite: Path = typer.Argument(..., help="Eval suite YAML/JSON file."),
+    bom: Path | None = typer.Option(None, "--bom", help="BOM JSON to evaluate."),
+    format: str = typer.Option("text", "--format", "-f", help="text | json."),
+) -> None:
+    """Run a context-eval suite against a BOM (CI gate)."""
+    from .bom import ContextBOM
+    from .evals import EvalSuite
+
+    if not suite.exists():
+        console.print(f"[red]error:[/red] eval suite not found: {suite}")
+        raise typer.Exit(code=2)
+    if bom is None or not bom.exists():
+        console.print("[red]error:[/red] --bom <context_bom.json> is required")
+        raise typer.Exit(code=2)
+    suite_obj = EvalSuite.from_file(str(suite))
+    bom_obj = ContextBOM.from_json(str(bom))
+    results = suite_obj.run(bom_obj)
+    all_passed = all(r.passed for r in results)
+    if format == "json":
+        sys.stdout.write(json.dumps([r.to_dict() for r in results], indent=2) + "\n")
+    else:
+        for r in results:
+            mark = "[green]PASS[/green]" if r.passed else "[red]FAIL[/red]"
+            console.print(f"{mark}  {r.name}")
+            for c in r.checks:
+                cm = "[green]✓[/green]" if c.passed else "[red]✗[/red]"
+                console.print(f"    {cm} {c.name}: {c.detail}")
+    raise typer.Exit(code=0 if all_passed else 1)
+
+
+@app.command("cache-plan")
+def cache_plan_cmd(
+    bom: Path = typer.Argument(..., help="BOM JSON (or compiled-pack JSON) to analyze."),
+    format: str = typer.Option("text", "--format", "-f", help="text | json."),
+) -> None:
+    """Analyze cache layout of a compiled context."""
+    from .compiler import compiled_pack_from_dict
+
+    if not bom.exists():
+        console.print(f"[red]error:[/red] file does not exist: {bom}")
+        raise typer.Exit(code=2)
+    from .bom import ContextBOM
+    from .cache import CachePlanner
+
+    data = json.loads(bom.read_text(encoding="utf-8"))
+    if "included_items" in data and "schema_version" in data:
+        plan = CachePlanner().analyze_bom(ContextBOM.from_dict(data))
+    elif "decisions" in data:
+        plan = compiled_pack_from_dict(data).cache_plan()
+    else:
+        console.print("[red]error:[/red] expected a BOM JSON (from `compile --bom`) or compiled-pack JSON.")
+        raise typer.Exit(code=2)
+    if format == "json":
+        sys.stdout.write(json.dumps(plan.to_dict(), indent=2) + "\n")
+        return
+    console.print(f"Cacheable estimate: [bold]{plan.cacheable_token_estimate:,}[/bold] tokens "
+                  f"({plan.cache_efficiency_score}/100 efficiency)")
+    console.print(f"Stable prefix: {plan.stable_prefix_length} items / {plan.stable_prefix_tokens:,} tokens")
+    console.print(f"Dynamic section: {plan.dynamic_section_length} items / {plan.dynamic_section_tokens:,} tokens")
+    if plan.warnings:
+        console.print("\n[yellow]Warnings:[/yellow]")
+        for w in plan.warnings:
+            console.print(f"  ! {w}")
+    if plan.recommendations:
+        console.print("\n[cyan]Recommendations:[/cyan]")
+        for r in plan.recommendations:
+            console.print(f"  → {r}")
+
+
+@app.command()
+def viz(
+    bom: Path = typer.Argument(..., help="BOM JSON (or compiled-pack JSON)."),
+    out: Path = typer.Option(Path("context_mri.html"), "--out", "-o", help="Output HTML path."),
+) -> None:
+    """Generate a Context MRI HTML report (requires no extra deps to render)."""
+    from .bom import ContextBOM
+    from .compiler import compiled_pack_from_dict
+    from .viz import ContextMRI
+
+    if not bom.exists():
+        console.print(f"[red]error:[/red] file does not exist: {bom}")
+        raise typer.Exit(code=2)
+    data = json.loads(bom.read_text(encoding="utf-8"))
+    if "schema_version" in data and "included_items" in data:
+        bom_obj = ContextBOM.from_dict(data)
+    else:
+        bom_obj = ContextBOM.from_compiled(compiled_pack_from_dict(data))
+    ContextMRI(bom=bom_obj).export_html(str(out))
+    console.print(f"[green]Context MRI written:[/green] {out}")
+
+
+@app.command("viz-diff")
+def viz_diff_cmd(
+    old_bom: Path = typer.Argument(..., help="Old BOM JSON."),
+    new_bom: Path = typer.Argument(..., help="New BOM JSON."),
+    out: Path = typer.Option(Path("context_diff.html"), "--out", "-o"),
+) -> None:
+    """Generate a visual before/after context diff HTML report."""
+    from .viz import ContextDiffViz
+
+    for p in (old_bom, new_bom):
+        if not p.exists():
+            console.print(f"[red]error:[/red] file does not exist: {p}")
+            raise typer.Exit(code=2)
+    ContextDiffViz.from_files(str(old_bom), str(new_bom)).export_html(str(out))
+    console.print(f"[green]Context diff written:[/green] {out}")
+
+
+@app.command("mcp-audit")
+def mcp_audit_cmd(
+    tools: Path = typer.Argument(..., help="MCP tool schemas JSON file."),
+    format: str = typer.Option("text", "--format", "-f", help="text | json."),
+    out: Path | None = typer.Option(None, "--out", "-o"),
+) -> None:
+    """Audit MCP tool schemas: token cost, complexity, risk, overlap."""
+    from .mcp import MCPToolBudgeter
+
+    if not tools.exists():
+        console.print(f"[red]error:[/red] file does not exist: {tools}")
+        raise typer.Exit(code=2)
+    result = MCPToolBudgeter().audit(str(tools))
+    if format == "json":
+        _emit(result.to_json(), out)
+        return
+    table = Table(title=f"mcp-audit: {tools}")
+    table.add_column("Tool", overflow="fold")
+    table.add_column("Tokens", justify="right")
+    table.add_column("Complexity", justify="right")
+    table.add_column("Risky")
+    for a in sorted(result.assessments, key=lambda a: -a.tokens):
+        table.add_row(a.name, f"{a.tokens:,}", str(a.schema_complexity), ", ".join(a.risk_terms) or "—")
+    console.print(table)
+    console.print(f"\nTotal: {result.total_tokens:,} tokens across {len(result.assessments)} tools")
+    for w in result.warnings:
+        console.print(f"  [yellow]![/yellow] {w}")
+
+
+@app.command("mcp-select")
+def mcp_select_cmd(
+    tools: Path = typer.Argument(..., help="MCP tool schemas JSON file."),
+    task: str = typer.Option(..., "--task", "-t", help="Task to select tools for."),
+    budget: int = typer.Option(6_000, "--budget", "-b", help="Token budget for tools."),
+    out: Path | None = typer.Option(None, "--out", "-o", help="Write selected tool names/result JSON."),
+) -> None:
+    """Select the most relevant MCP tools for a task under a token budget."""
+    from .mcp import MCPToolBudgeter
+
+    if not tools.exists():
+        console.print(f"[red]error:[/red] file does not exist: {tools}")
+        raise typer.Exit(code=2)
+    result = MCPToolBudgeter(token_budget=budget).select_tools(task=task, tools=str(tools))
+    if out is not None:
+        out.write_text(result.to_json(), encoding="utf-8")
+        console.print(f"[green]Selection written:[/green] {out}")
+    console.print(f"[bold]Selected[/bold] ({result.selected_tokens:,}/{budget:,} tokens): {result.selected_tools}")
+    console.print(f"[dim]Excluded:[/dim] {result.excluded_tools}")
+    if result.risky_tools:
+        console.print(f"[yellow]Risky:[/yellow] {result.risky_tools}")
+
+
+@app.command("mcp-viz")
+def mcp_viz_cmd(
+    tools: Path = typer.Argument(..., help="MCP tool schemas JSON file."),
+    task: str | None = typer.Option(None, "--task", "-t", help="Task to select tools for."),
+    budget: int = typer.Option(6_000, "--budget", "-b"),
+    out: Path = typer.Option(Path("mcp_map.html"), "--out", "-o"),
+) -> None:
+    """Generate an MCP tool map HTML report."""
+    from .viz import MCPToolViz
+
+    if not tools.exists():
+        console.print(f"[red]error:[/red] file does not exist: {tools}")
+        raise typer.Exit(code=2)
+    MCPToolViz.from_file(str(tools), task=task, budget=budget).export_html(str(out))
+    console.print(f"[green]MCP map written:[/green] {out}")
+
+
+def _emit(text: str, out: Path | None) -> None:
+    """Write text to a file or stdout."""
+    if out is not None:
+        out.write_text(text, encoding="utf-8")
+        console.print(f"[green]Written:[/green] {out}")
+    else:
+        sys.stdout.write(text + "\n")
 
 
 if __name__ == "__main__":  # pragma: no cover

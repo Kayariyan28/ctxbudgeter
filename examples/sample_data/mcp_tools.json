@@ -1,0 +1,42 @@
+[
+  {
+    "name": "create_github_issue",
+    "description": "Create a new GitHub issue in a repository from a title and body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "repo": {"type": "string"},
+        "title": {"type": "string"},
+        "body": {"type": "string"},
+        "labels": {"type": "array", "items": {"type": "string"}}
+      },
+      "required": ["repo", "title"]
+    }
+  },
+  {
+    "name": "open_github_ticket",
+    "description": "Create a new GitHub issue in a repository from a title and body.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {"repo": {"type": "string"}, "title": {"type": "string"}}
+    }
+  },
+  {
+    "name": "send_email",
+    "description": "Send an email message to one or more recipients.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {"to": {"type": "string"}, "subject": {"type": "string"}, "body": {"type": "string"}}
+    }
+  },
+  {
+    "name": "delete_database",
+    "description": "Permanently delete a production database and all of its tables.",
+    "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}}
+  },
+  {
+    "name": "search_knowledge_base",
+    "description": "Search the internal knowledge base for relevant articles.",
+    "inputSchema": {"type": "object", "properties": {"query": {"type": "string"}, "k": {"type": "integer"}}}
+  }
+]
