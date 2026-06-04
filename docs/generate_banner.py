@@ -32,7 +32,7 @@ def main() -> int:
         )
         page.goto(html)
         page.wait_for_load_state("networkidle")
-        page.locator(".card").screenshot(path=str(out))
+        page.locator(".banner").screenshot(path=str(out))
         browser.close()
 
     print(f"wrote {out}")

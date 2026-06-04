@@ -1,151 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>ctxbudgeter — README banner (1280×640)</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@200;300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
-    body {
-      background: #161616;
-      font-family: 'IBM Plex Mono', monospace;
-      font-weight: 300;
-      color: #fff;
-      display: flex; align-items: center; justify-content: center;
-      min-height: 100vh; padding: 40px;
-    }
+<meta charset="utf-8" />
+<title>ctxbudgeter — banner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    background: #eef0f3;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh;
+  }
+  .banner {
+    position: relative;
+    width: 1280px; height: 640px;
+    background: #ffffff;
+    overflow: hidden;
+    color: #0a0c10;
+  }
+  /* faint dot grid across the whole hero */
+  .banner::before {
+    content: "";
+    position: absolute; inset: 0;
+    background-image: radial-gradient(circle, #d3d8e0 1.25px, transparent 1.7px);
+    background-size: 19px 19px;
+    opacity: 0.7;
+  }
+  /* blue dotted halftone blob, upper-right — echoes the reference */
+  .halftone {
+    position: absolute;
+    top: -40px; right: -30px;
+    width: 620px; height: 420px;
+    background-image: radial-gradient(circle, #2563eb 1.7px, transparent 2.3px);
+    background-size: 16px 16px;
+    -webkit-mask-image: radial-gradient(ellipse 42% 46% at 62% 42%, #000 0%, #000 30%, rgba(0,0,0,0.5) 52%, transparent 72%);
+            mask-image: radial-gradient(ellipse 42% 46% at 62% 42%, #000 0%, #000 30%, rgba(0,0,0,0.5) 52%, transparent 72%);
+    opacity: 0.9;
+  }
+  .halftone.two {
+    top: 70px; right: 240px; width: 360px; height: 300px;
+    -webkit-mask-image: radial-gradient(ellipse 40% 44% at 50% 50%, #000 0%, #000 24%, rgba(0,0,0,0.4) 50%, transparent 70%);
+            mask-image: radial-gradient(ellipse 40% 44% at 50% 50%, #000 0%, #000 24%, rgba(0,0,0,0.4) 50%, transparent 70%);
+    opacity: 0.55;
+  }
 
-    .card {
-      width: 1280px; height: 640px;
-      background: #000;
-      color: #fff;
-      position: relative;
-      padding: 56px 64px;
-      overflow: hidden;
-      box-shadow: 0 24px 80px rgba(0,0,0,0.55);
-      letter-spacing: 0.015em;
-    }
+  .content { position: relative; z-index: 2; height: 100%; padding: 40px 56px; display: flex; flex-direction: column; }
 
-    .crop { position: absolute; width: 14px; height: 14px; opacity: 0.55; }
-    .crop.tl { top: 22px; left: 22px;   border-left: 1px solid #fff; border-top: 1px solid #fff; }
-    .crop.tr { top: 22px; right: 22px;  border-right: 1px solid #fff; border-top: 1px solid #fff; }
-    .crop.bl { bottom: 22px; left: 22px;  border-left: 1px solid #fff; border-bottom: 1px solid #fff; }
-    .crop.br { bottom: 22px; right: 22px; border-right: 1px solid #fff; border-bottom: 1px solid #fff; }
+  /* nav */
+  nav { display: flex; align-items: center; justify-content: space-between; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .mark {
+    width: 26px; height: 26px; position: relative; display: inline-block;
+  }
+  .mark i { position: absolute; width: 11px; height: 11px; border: 2px solid #0a0c10; }
+  .mark i:nth-child(1) { top: 0; left: 0; }
+  .mark i:nth-child(2) { bottom: 0; right: 0; background: #2563eb; border-color: #2563eb; }
+  .wordmark { font-weight: 700; font-size: 19px; letter-spacing: -0.02em; }
+  .vchip {
+    margin-left: 6px; font-size: 11px; font-weight: 600; color: #2563eb;
+    background: #e8eeff; border-radius: 999px; padding: 3px 9px; letter-spacing: 0.02em;
+  }
+  .nav-right { display: flex; align-items: center; gap: 26px; font-size: 14px; font-weight: 500; color: #3b4250; }
+  .nav-right a { color: #3b4250; text-decoration: none; }
+  .pill {
+    background: #0a0c10; color: #fff; border-radius: 999px;
+    padding: 9px 18px; font-size: 13px; font-weight: 600;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: -0.01em;
+  }
 
-    .marker {
-      display: inline-block; width: 9px; height: 9px;
-      background: #fff; margin-right: 10px; vertical-align: 1px;
-    }
+  /* hero */
+  .hero { flex: 1; display: flex; align-items: center; }
+  .hero-left { max-width: 760px; }
+  .h1 {
+    font-size: 92px; font-weight: 800; line-height: 0.96; letter-spacing: -0.045em;
+  }
+  .h1 .blue { color: #2563eb; }
+  .sub {
+    position: absolute; right: 56px; bottom: 188px;
+    max-width: 330px; font-size: 15px; line-height: 1.55; color: #6b7280; font-weight: 400;
+  }
 
-    .header, .footer {
-      position: absolute; left: 64px; right: 64px;
-      display: flex; justify-content: space-between; align-items: center;
-      font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
-      color: rgba(255,255,255,0.55);
-    }
-    .header { top: 48px; }
-    .footer { bottom: 48px; }
-
-    .body-area {
-      position: absolute;
-      top: 108px; left: 64px; right: 64px; bottom: 108px;
-      display: grid;
-      grid-template-columns: 1.35fr 1fr;
-      column-gap: 56px;
-      align-items: start;
-    }
-
-    .label {
-      font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
-      color: rgba(255,255,255,0.48);
-    }
-
-    .h0 {
-      font-size: 100px; font-weight: 300; line-height: 0.95;
-      letter-spacing: -0.04em; margin: 18px 0 0 0;
-    }
-
-    .tagline {
-      font-size: 21px; line-height: 1.5;
-      color: rgba(255,255,255,0.86);
-      margin-top: 26px; max-width: 600px;
-    }
-    .tagline .em { color: #fff; font-weight: 400; }
-
-    .right-col {
-      border-left: 1px solid rgba(255,255,255,0.18);
-      padding-left: 40px;
-      display: flex; flex-direction: column; gap: 22px;
-    }
-    .field .v { font-size: 18px; line-height: 1.45; color: #fff; margin-top: 8px; }
-    .field .v.code { font-family: 'IBM Plex Mono', monospace; font-weight: 400; }
-
-    .preview {
-      font-family: 'IBM Plex Mono', monospace;
-      font-size: 12px; line-height: 1.55;
-      color: rgba(255,255,255,0.78);
-      white-space: pre; margin-top: 6px;
-    }
-    .preview .ok { color: #fff; font-weight: 400; }
-    .preview .dim { color: rgba(255,255,255,0.4); }
-
-    @media print { body { background: #fff; padding: 0; min-height: 0; } .card { box-shadow: none; } }
-  </style>
+  /* tabs */
+  .tabs {
+    display: flex; align-items: center; gap: 30px;
+    border-top: 1px solid #e3e6ea; padding-top: 20px;
+    font-size: 15px; font-weight: 500; color: #9aa1ad;
+  }
+  .tabs .active { color: #0a0c10; font-weight: 700; position: relative; }
+  .tabs .active::after {
+    content: ""; position: absolute; left: 0; bottom: -21px; height: 2px; width: 100%; background: #0a0c10;
+  }
+</style>
 </head>
 <body>
-
-<section class="card">
-  <span class="crop tl"></span><span class="crop tr"></span>
-  <span class="crop bl"></span><span class="crop br"></span>
-
-  <div class="header">
-    <span><span class="marker"></span>K28  /  KARAN CHANDRA DEY  /  k28art.space</span>
-    <span>V0.2.0  ·  MIT  ·  PYTHON 3.10+</span>
-  </div>
-
-  <div class="body-area">
-    <div>
-      <span class="label">[ CONTEXT ENGINEERING TOOLKIT ]</span>
-      <h1 class="h0">ctxbudgeter<span style="opacity: 0.45">.</span></h1>
-      <p class="tagline">
-        Compile clean, cheap, auditable context for AI agents.<br/><br/>
-        <span class="em">Webpack</span> for agent context.<br/>
-        <span class="em">pytest</span> for prompt quality.<br/>
-        A token budget manager.
-      </p>
-    </div>
-
-    <div class="right-col">
-      <div class="field">
-        <div class="label">[ INSTALL ]</div>
-        <div class="v code">pip install ctxbudgeter</div>
+<div class="banner">
+  <div class="halftone"></div>
+  <div class="halftone two"></div>
+  <div class="content">
+    <nav>
+      <div class="brand">
+        <span class="mark"><i></i><i></i></span>
+        <span class="wordmark">ctxbudgeter</span>
+        <span class="vchip">v0.3.0</span>
       </div>
-
-      <div class="field">
-        <div class="label">[ USE ANY FRAMEWORK ]</div>
-        <div class="v">LangGraph  ·  CrewAI<br/>OpenAI Agents SDK<br/>PydanticAI  ·  your own loop</div>
+      <div class="nav-right">
+        <a>Docs</a>
+        <a>GitHub</a>
+        <span class="pill">pip install ctxbudgeter</span>
       </div>
+    </nav>
 
-      <div class="field">
-        <div class="label">[ COMPILE REPORT ]</div>
-<pre class="preview"><span class="dim">Included:</span>
-  - system        412 tok
-  - readme      2,086 tok
-  - diff        3,420 tok <span class="dim">required</span>
-<span class="dim">Cacheable:</span>      7,388 tok
-<span class="dim">Health:</span>         <span class="ok">92 / 100</span></pre>
+    <div class="hero">
+      <div class="hero-left">
+        <div class="h1">Real context.<br/><span class="blue">Real control.</span></div>
+      </div>
+      <div class="sub">
+        A ContextOps toolkit for production AI agents — compile, govern, scan, and
+        visualize LLM context with transparency and control, before every model call.
       </div>
     </div>
-  </div>
 
-  <div class="footer">
-    <span><span class="marker"></span>K28 DESIGN LAB  ·  HELPING SMEs SHIP THEIR FIRST MVP</span>
-    <span>GITHUB.COM/KAYARIYAN28/CTXBUDGETER  →</span>
+    <div class="tabs">
+      <span class="active">ContextOps</span>
+      <span>Policy</span>
+      <span>Scanner</span>
+      <span>Context BOM</span>
+      <span>Context MRI</span>
+      <span>MCP Budgeter</span>
+      <span>Cache</span>
+    </div>
   </div>
-</section>
-
+</div>
 </body>
 </html>
