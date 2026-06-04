@@ -118,7 +118,7 @@ def scan(
             "tokenizer_backend": counter.backend,
             "total_tokens": total,
             "files": inventory,
-        }, indent=2))
+        }, indent=2), encoding="utf-8")
         console.print(f"[green]Inventory written:[/green] {output}")
     if emit_pack is not None:
         _emit_pack_yaml(emit_pack, inventory, path, model, budget, task)
@@ -208,16 +208,16 @@ def compile_cmd(
         else to_text(compiled)
     )
     if output is not None:
-        output.write_text(rendered)
+        output.write_text(rendered, encoding="utf-8")
         console.print(f"[green]Report written:[/green] {output}")
     else:
         sys.stdout.write(rendered + "\n")
 
     if prompt_output is not None:
-        prompt_output.write_text(compiled.as_text())
+        prompt_output.write_text(compiled.as_text(), encoding="utf-8")
         console.print(f"[green]Prompt written:[/green] {prompt_output}")
     if save_pack is not None:
-        save_pack.write_text(to_json(compiled))
+        save_pack.write_text(to_json(compiled), encoding="utf-8")
         console.print(f"[green]Pack saved:[/green] {save_pack}")
     if bom_out is not None:
         compiled.bom.to_json(str(bom_out))
@@ -257,12 +257,12 @@ def pack(
         else to_text(compiled)
     )
     if output is not None:
-        output.write_text(rendered)
+        output.write_text(rendered, encoding="utf-8")
         console.print(f"[green]Report written:[/green] {output}")
     else:
         sys.stdout.write(rendered + "\n")
     if save_pack is not None:
-        save_pack.write_text(to_json(compiled))
+        save_pack.write_text(to_json(compiled), encoding="utf-8")
         console.print(f"[green]Pack saved:[/green] {save_pack}")
     if fail_below is not None and compiled.health_score < fail_below:
         console.print(
@@ -295,7 +295,7 @@ def report(
     if not pack_json.exists():
         console.print(f"[red]error:[/red] pack file does not exist: {pack_json}")
         raise typer.Exit(code=2)
-    data = json.loads(pack_json.read_text())
+    data = json.loads(pack_json.read_text(encoding="utf-8"))
     if format == "json":
         sys.stdout.write(json.dumps(data, indent=2) + "\n")
         return
@@ -398,7 +398,7 @@ def _emit_pack_yaml(
         lines.append(f"    cache_policy: {f['suggested_cache_policy']}")
         lines.append("    compressible: true")
         lines.append("")
-    out_path.write_text("\n".join(lines))
+    out_path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def _render_from_dict(data: dict, *, markdown: bool) -> str:

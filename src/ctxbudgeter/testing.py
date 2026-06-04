@@ -212,9 +212,9 @@ class GoldenPack:
         current = self._summarize(pack)
         if not self.path.exists() or self.update:
             self.path.parent.mkdir(parents=True, exist_ok=True)
-            self.path.write_text(json.dumps(current, indent=2, sort_keys=True))
+            self.path.write_text(json.dumps(current, indent=2, sort_keys=True), encoding="utf-8")
             return
-        stored = json.loads(self.path.read_text())
+        stored = json.loads(self.path.read_text(encoding="utf-8"))
         if stored != current:
             diff = _shallow_diff(stored, current)
             raise ContextAssertionError(

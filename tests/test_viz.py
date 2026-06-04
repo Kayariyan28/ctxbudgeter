@@ -52,14 +52,14 @@ def test_mri_export_html(tmp_path) -> None:
     out = tmp_path / "mri.html"
     ContextMRI.from_compiled(_compiled_with_secret()).export_html(str(out))
     assert out.exists()
-    assert SECRET not in out.read_text()
+    assert SECRET not in out.read_text(encoding="utf-8")
 
 
 def test_mri_export_json(tmp_path) -> None:
     out = tmp_path / "mri.json"
     ContextMRI.from_compiled(_compiled_with_secret()).export_json(str(out))
-    assert SECRET not in out.read_text()
-    assert "influence_proxy" in out.read_text()
+    assert SECRET not in out.read_text(encoding="utf-8")
+    assert "influence_proxy" in out.read_text(encoding="utf-8")
 
 
 def test_diff_viz_html(tmp_path) -> None:

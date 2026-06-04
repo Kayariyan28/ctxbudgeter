@@ -95,7 +95,7 @@ def test_scan_emit_pack(tmp_path: Path) -> None:
     )
     assert result.exit_code == 0
     assert out_pack.exists()
-    text = out_pack.read_text()
+    text = out_pack.read_text(encoding="utf-8")
     assert "model:" in text
     assert "items:" in text
     assert "README.md" in text

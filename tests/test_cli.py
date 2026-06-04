@@ -43,7 +43,7 @@ def test_scan_writes_inventory(tmp_path: Path) -> None:
     out = tmp_path / "inv.json"
     result = runner.invoke(app, ["scan", str(tmp_path), "--output", str(out)])
     assert result.exit_code == 0
-    data = json.loads(out.read_text())
+    data = json.loads(out.read_text(encoding="utf-8"))
     assert data["total_tokens"] > 0
     assert any(f["relative_path"].endswith("README.md") for f in data["files"])
 
