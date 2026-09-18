@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/banner.png?v=0.3.0" alt="ctxbudgeter — ContextOps toolkit for AI agents" width="100%" />
+  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/banner.png?v=0.3.1" alt="ctxbudgeter — ContextOps toolkit for AI agents" width="100%" />
 </p>
 
 # ctxbudgeter
@@ -76,8 +76,28 @@ Webpack for agent context  •  pytest for prompt/context quality  •  token bu
 - **Isolation** (Isolate strategy) — `pack.fork()` builds a subagent-scoped pack with its own budget
 - **Async compile** — concurrent resolution of async References, async-aware compressor hook
 - **Declarative YAML/JSON specs** — check pack configuration into git, CI-friendly
-- **CLI** — `scan`, `compile`, `pack`, `validate`, `report` for Claude Code and CI workflows
+- **CLI** — 15 commands covering compile, audit, diff, eval, cache planning, visualization and MCP tool budgeting
 - **Zero LLM calls in the core** — local-first, deterministic, fast
+
+## What's new in 0.3.1
+
+A correctness release. Full detail in [CHANGELOG.md](CHANGELOG.md).
+
+- **`bom` no longer crashes on a compiled-pack snapshot**
+  ([#8](https://github.com/Kayariyan28/ctxbudgeter/issues/8)) — it raised
+  `TypeError: Console.print() got an unexpected keyword argument 'stderr'`.
+- **A BOM from a snapshot no longer under-reports risk.** Governance metadata was lost
+  rebuilding a `CompiledPack` from JSON, so `risk_score` came back `0` on context whose
+  snapshot recorded policy violations and scanner findings — an `eval` gate could pass
+  on context containing detected secrets. Both BOM paths now agree.
+- **`cache-plan` no longer returns an all-zero plan** for a compiled-pack snapshot, and
+  items restored from a snapshot keep their prompt assembly order.
+- **No more `UnicodeEncodeError` on non-UTF-8 consoles** (cp1252 is still common on
+  Windows).
+- **Dependency floors corrected** to versions that genuinely work: `pydantic>=2.6`,
+  `typer>=0.16`. The previous floors admitted builds where the CLI could not render a
+  single `--help` screen.
+- **Python 3.14 declared and tested** across Linux, macOS and Windows.
 
 ## Install
 
@@ -92,7 +112,8 @@ pip install "ctxbudgeter[anthropic,openai,langchain]"
 pip install "ctxbudgeter[all]"             # everything
 ```
 
-Python 3.10+. Adapters are lazy-imported — you only pay for the SDKs you actually use.
+Python 3.10 – 3.14, tested on Linux, macOS and Windows. Adapters are lazy-imported —
+you only pay for the SDKs you actually use.
 
 ## Quick start
 
@@ -389,6 +410,49 @@ ctxbudgeter pack pack.yaml --format markdown -o context-report.md
 ctxbudgeter compile . --task "..." --save-pack pack.json
 ctxbudgeter report pack.json --format markdown
 ```
+
+### Audit & govern
+
+```bash
+# Scan files for PII and secrets (local-first, masked previews only)
+ctxbudgeter scan-risk . --json
+
+# Produce a Context Bill of Materials, then render one you saved earlier
+ctxbudgeter compile . --task "fix auth bug" --bom context_bom.json
+ctxbudgeter bom context_bom.json --format markdown
+
+# Diff two BOMs and fail CI if context risk went up
+ctxbudgeter diff old_bom.json new_bom.json --fail-on-risk-increase
+
+# Run a context-eval suite as a CI gate
+ctxbudgeter eval evals.yaml --bom context_bom.json
+```
+
+### Optimize & visualize
+
+```bash
+# Inspect prompt-cache layout: stable prefix, dynamic tail, cache-busting content
+ctxbudgeter cache-plan context_bom.json
+
+# Context MRI — a single-file HTML report, no extra deps to render
+ctxbudgeter viz pack.json --out context_mri.html
+ctxbudgeter viz-diff old_bom.json new_bom.json --out context_diff.html
+```
+
+### MCP tool budgeting
+
+```bash
+# Audit MCP tool schemas: token cost, complexity, risk, overlap
+ctxbudgeter mcp-audit tools.json
+
+# Select the most relevant tools for a task under a token budget
+ctxbudgeter mcp-select tools.json --task "refund a customer" --budget 2000
+ctxbudgeter mcp-viz tools.json --out mcp_map.html
+```
+
+Every command takes `--format json` where a machine-readable payload makes sense, and
+writes it to **stdout only** — advisory notes go to stderr, so `ctxbudgeter bom pack.json
+-f json | jq .` is safe to pipe.
 
 ## Wire it into CI
 
