@@ -4,7 +4,7 @@ All notable changes to `ctxbudgeter` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.1] - 2026-09-18
 
 ### Fixed
 
@@ -22,6 +22,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `max_risk_score` **passed on context containing detected secrets** when the same
   compile via `compile --bom` correctly failed it. The metadata now survives the round
   trip and both paths agree.
+- **`cache-plan` no longer returns an all-zero plan for a compiled-pack snapshot.**
+  It called `CompiledPack.cache_plan()`, which walks `included_items` — always empty
+  for a snapshot — and so reported `cacheable_token_estimate: 0` with exit 0 while
+  `bom` reported the real figure for the same file. It now uses the content-free
+  `CachePlanner.analyze_bom()` path that exists for exactly this case.
+- **Items restored from a snapshot keep their prompt assembly order.** `decisions` is
+  stored in scoring order, so rebuilding items from it put a dynamic item first and
+  collapsed the cacheable prefix to zero. The snapshot's `included_order` is now
+  restored and applied.
+- **Error messages no longer lose the name of the extra to install.** Exception text
+  was interpolated into `Console.print`, which parses `[yaml]` in
+  `pip install ctxbudgeter[yaml]` as a style tag and drops it — telling the user to
+  install the package they already had. Such text is now escaped.
 - **A BOM built from a compiled-pack snapshot is no longer empty.**
   `ContextBOM.from_compiled` iterated `compiled.included_items`, which a snapshot never
   re-materializes, so it emitted a Bill of Materials with zero items while still
@@ -37,17 +50,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **CI now runs on every pull request, not only those targeting `main`.** The
+  workflow filtered on `pull_request: branches: [main]`, so a stacked PR aimed at
+  another feature branch reported no checks at all — it looked unverified rather
+  than failing, which is the more dangerous of the two.
 - **Dependency floors corrected to the versions the package actually works on.**
-  The previous floors advertised support that did not exist: `pydantic>=2.5` fails
-  with `PydanticUserError` on the deferred `TrustLevel` annotation (194 of 250 tests
-  fail), and `typer>=0.9` fails with `RuntimeError: Type not yet supported:
-  pathlib.Path | None`, which makes every command — including `--version` —
-  unusable. Now `pydantic>=2.6,<3.0` and `typer>=0.15`. `rich>=13.0` is unchanged
-  and verified against rich 13.0, 13.7, 14.0 and 15.0.
+  The previous floors advertised support that did not exist. `pydantic>=2.5` fails
+  across most of the suite with `PydanticUserError: ContextItem is not fully
+  defined`. `typer>=0.9` fails with `RuntimeError: Type not yet supported:
+  pathlib.Path | None`, making every command — including `--version` — unusable;
+  and typer 0.15.0–0.15.3 do not bound `click`, so against click >= 8.2 every
+  `--help` dies with `Parameter.make_metavar() missing 1 required positional
+  argument`. Now `pydantic>=2.6,<3.0` and `typer>=0.16`, each confirmed by running
+  the suite *and* rendering every help screen at the floor. `rich>=13.0` is
+  unchanged, verified against rich 13.0, 13.7, 14.0 and 15.0.
 
 ### Added
 
 - Regression tests for the `bom` command, which previously had no CLI coverage.
+- **Python 3.14 support**, declared and tested. The interpreter already worked —
+  `requires-python` allows it — but it was absent from the classifiers and from the
+  CI matrix, so nothing verified it. 3.14 now runs in CI on Linux, macOS and Windows,
+  including the full `[dev,all]` extras.
+- Regression tests for the compiled-pack BOM path (`tests/test_bom_compiled_fidelity.py`).
+- `tests/test_cli_contract.py`: every command's `--help` must render, which is the
+  check that catches a dependency floor admitting a broken CLI, plus assembly-order
+  and cache-plan coverage for snapshot input.
 
 ## [0.3.0] - 2026-06-05
 

@@ -6,6 +6,9 @@ unchanged across the 0.3 enterprise upgrade.
 
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 import ctxbudgeter
 from ctxbudgeter import (
     CompiledPack,
@@ -16,8 +19,30 @@ from ctxbudgeter import (
 
 
 def test_import_and_version() -> None:
+    """`__version__` must be a release version and agree with `pyproject.toml`.
+
+    A hard-coded literal only proved someone edited this line during a release. The
+    invariant that actually matters is the one RELEASE_CHECKLIST calls out: keep
+    `pyproject.toml` and `src/ctxbudgeter/__init__.py` in sync. Read pyproject from the
+    source tree rather than installed metadata, which goes stale after a version bump
+    under an editable install.
+    """
     assert hasattr(ctxbudgeter, "__version__")
-    assert ctxbudgeter.__version__ == "0.3.0"
+    assert re.fullmatch(
+        r"\d+\.\d+\.\d+(?:[.-]?(?:a|b|rc|dev|post)\d*)?", ctxbudgeter.__version__
+    ), f"not a release version: {ctxbudgeter.__version__!r}"
+
+    pyproject = Path(__file__).resolve().parent.parent / "pyproject.toml"
+    if not pyproject.is_file():  # pragma: no cover — installed without the source tree
+        return
+    declared = re.search(
+        r'^version = "([^"]+)"', pyproject.read_text(encoding="utf-8"), re.MULTILINE
+    )
+    assert declared, "no version found in pyproject.toml"
+    assert ctxbudgeter.__version__ == declared.group(1), (
+        f"__init__.py says {ctxbudgeter.__version__}, pyproject.toml says "
+        f"{declared.group(1)} — bump both"
+    )
 
 
 def test_legacy_pack_flow_unchanged() -> None:

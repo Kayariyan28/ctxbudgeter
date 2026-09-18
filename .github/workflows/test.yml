@@ -3,8 +3,9 @@ name: tests
 on:
   push:
     branches: [main]
+  # No branch filter: a stacked PR targeting another feature branch must still get
+  # CI. With `branches: [main]` such a PR silently reports no checks at all.
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
@@ -17,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
 
     steps:
       - uses: actions/checkout@v6

@@ -103,6 +103,9 @@ class CompiledPack:
     included_tokens: dict[str, int]
     tokenizer_backend: str
     input_order: list[str] = field(default_factory=list)
+    #: Assembly order of the included items, restored from a snapshot. Empty on a live
+    #: compile, where ``included_items`` already carries the order.
+    restored_included_order: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
     """Sensitivity flags, compression overshoots, loader failures — anything a
     human reviewer would want to see before signing off."""
@@ -1246,6 +1249,9 @@ def compiled_pack_from_dict(data: dict) -> CompiledPack:
         included_tokens={},
         tokenizer_backend=data.get("tokenizer_backend", "unknown"),
         input_order=list(data.get("input_order", [])),
+        # Assembly order matters: the cacheable prefix is the run of stable items at
+        # the TOP of the prompt. `decisions` is in scoring order, not prompt order.
+        restored_included_order=list(data.get("included_order", [])),
         warnings=list(data.get("warnings", [])),
         # Governance metadata is present in to_dict() output and must survive the
         # round trip. Dropping it silently reported risk_score 0 on context whose
