@@ -1247,4 +1247,12 @@ def compiled_pack_from_dict(data: dict) -> CompiledPack:
         tokenizer_backend=data.get("tokenizer_backend", "unknown"),
         input_order=list(data.get("input_order", [])),
         warnings=list(data.get("warnings", [])),
+        # Governance metadata is present in to_dict() output and must survive the
+        # round trip. Dropping it silently reported risk_score 0 on context whose
+        # snapshot recorded policy violations and scanner findings.
+        task=data.get("task"),
+        policy_summary=data.get("policy_summary"),
+        policy_violations=list(data.get("policy_violations") or []),
+        scanner_findings=list(data.get("scanner_findings") or []),
+        item_risk=dict(data.get("item_risk") or {}),
     )
