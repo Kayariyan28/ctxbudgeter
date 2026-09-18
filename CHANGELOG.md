@@ -14,6 +14,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   `Console` is constructed, so the advisory note now goes through a dedicated
   `Console(stderr=True)`. Keeping the note on stderr also means `bom -f json` and
   `bom -f markdown` emit a clean, pipeable payload on stdout.
+- **A BOM built from a compiled-pack snapshot no longer under-reports risk.**
+  `compiled_pack_from_dict` dropped `task`, `policy_summary`, `policy_violations`,
+  `scanner_findings` and `item_risk`, even though `to_dict()` writes all of them. A BOM
+  derived from a saved snapshot therefore reported `risk_score: 0` on context whose
+  snapshot recorded policy violations and scanner findings — so an `eval` gate such as
+  `max_risk_score` **passed on context containing detected secrets** when the same
+  compile via `compile --bom` correctly failed it. The metadata now survives the round
+  trip and both paths agree.
+- **A BOM built from a compiled-pack snapshot is no longer empty.**
+  `ContextBOM.from_compiled` iterated `compiled.included_items`, which a snapshot never
+  re-materializes, so it emitted a Bill of Materials with zero items while still
+  reporting non-zero token totals. It now falls back to `compiled.decisions`, which carry
+  every field not derived from item content. Content-derived fields (`checksum`,
+  `relevance_score`, `freshness`, `trust_level`) remain unset — that is the "limited
+  detail" the CLI note refers to.
 - **Non-ASCII output no longer crashes legacy consoles** ([#8](https://github.com/Kayariyan28/ctxbudgeter/issues/8)).
   The CLI emits `✓`/`✗`/`•`/`—`, which raised `UnicodeEncodeError` on consoles using
   a non-UTF-8 codec (cp1252 is still common on Windows). stdout/stderr are now

@@ -146,6 +146,33 @@ class ContextBOM:
             elif status == "redacted":
                 redacted.append(it.name)
 
+        if not included:
+            # A pack reconstructed from a saved snapshot carries no re-materialized
+            # ContextItems, so the loop above yields nothing. The decisions still
+            # record everything that is not derived from item *content*, so build
+            # from those rather than emitting a Bill of Materials with no materials.
+            # Content-derived fields (checksum, relevance, freshness, provenance)
+            # stay unset — that is the "limited detail" the CLI warns about.
+            for d in compiled.decisions:
+                if d.status == "excluded":
+                    continue
+                included.append(BOMItem(
+                    name=d.name,
+                    kind=d.kind,
+                    tokens=d.tokens,
+                    priority=d.priority,
+                    cache_policy=d.cache_policy,
+                    included_reason=d.reason,
+                    status=d.status,
+                    risk_level=item_risk.get(d.name, "none"),
+                    source=d.source,
+                    original_tokens=d.original_tokens,
+                ))
+                if d.status == "compressed":
+                    compressed.append(d.name)
+                elif d.status == "redacted":
+                    redacted.append(d.name)
+
         excluded: list[BOMExcludedItem] = []
         for d in compiled.decisions:
             if d.status == "excluded":
