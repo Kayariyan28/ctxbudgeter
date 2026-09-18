@@ -31,6 +31,37 @@ ContextOps · token budgets · policy governance · PII/secret scanning ·
 Context Bill of Materials · context diffing · Context MRI · MCP tool budgeting
 ```
 
+## See it work
+
+90 seconds, real commands, real project — a customer-support agent whose config file still
+has a live Stripe key in it. ctxbudgeter finds it, redacts it before the model call, records
+what was sent, and fails the build.
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/ctxbudgeter-demo.svg" alt="ctxbudgeter terminal demo: scan, compile under budget, detect a leaked Stripe key, redact it, produce a Context Bill of Materials, fail a CI gate, and plan prompt-cache layout" width="100%" />
+</p>
+
+<details>
+<summary>What each step proves</summary>
+
+| # | Command | What it shows |
+|--:|---------|---------------|
+| 1 | `scan` | Inventory: 695 tokens across 7 files, with suggested priorities and cache policies |
+| 2 | `compile --budget 700` | Deterministic selection — every exclusion carries a reason (`302 tokens exceeds remaining 144`) |
+| 3 | `scan-risk` | Local PII/secret detection with masked previews: live Stripe key, DB URL with credentials, internal email and phone |
+| 4 | `compile --policy` | `settings.py` 107 → 59 tokens, marked `REDACTED`; the key is absent from the compiled pack |
+| 5 | `bom` | Context Bill of Materials — an auditable record of what the model was allowed to know |
+| 6 | `eval` | CI gate: risk 100 against a `max_risk_score: 20` budget → **exit 1** |
+| 7 | `diff --fail-on-risk-increase` | Branch vs. main: risk score **+100**, one file added → **exit 1** |
+| 8 | `cache-plan` | 647 of 658 tokens in a stable prefix, 98/100 cache efficiency |
+| 9 | `mcp-audit` / `mcp-select` | 5 MCP tools cost 290 tokens before the user speaks; picks the right 2 under a 150-token budget |
+| 10 | `viz` | Self-contained HTML Context MRI, no extra dependencies to render |
+
+The project and script used to record this live in [`docs/demo/`](docs/demo/) — run
+`docs/demo/demo.sh` to reproduce it.
+
+</details>
+
 ## ContextOps in 30 seconds
 
 ```python
