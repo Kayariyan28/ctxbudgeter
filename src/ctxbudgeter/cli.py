@@ -19,11 +19,40 @@ from .pack import ContextPack
 from .report import to_json, to_markdown, to_text
 from .tokenizer import TokenCounter
 
+
+def _harden_stream_encoding() -> None:
+    """Let stdout/stderr survive non-ASCII on legacy consoles (e.g. Windows cp1252).
+
+    The CLI emits ✓/✗/•/— in human-facing output, and Markdown payloads carry them too.
+    On a console whose encoding cannot represent those characters — cp1252 is still the
+    default on many Windows setups — an unhardened stream raises UnicodeEncodeError
+    mid-render. Prefer UTF-8; if the stream refuses to be reconfigured, at least degrade
+    unmappable characters instead of crashing.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:  # pragma: no cover — not a TextIOWrapper (e.g. captured)
+            continue
+        try:
+            reconfigure(encoding="utf-8", errors="replace")
+        except (ValueError, OSError):  # pragma: no cover — stream refuses reconfiguration
+            try:
+                reconfigure(errors="replace")
+            except (ValueError, OSError):
+                pass
+
+
+_harden_stream_encoding()
+
 app = typer.Typer(
     add_completion=False,
     help="ctxbudgeter — compile clean, cheap, auditable context for AI agents.",
 )
 console = Console()
+# Advisory notes go to stderr so stdout stays a clean, pipeable payload for `-f json`
+# and `-f markdown`. rich takes the stream at construction — Console.print() has no
+# `stderr=`/`file=` keyword.
+err_console = Console(stderr=True)
 
 DEFAULT_IGNORE = [
     ".git", ".venv", "venv", "env", "node_modules", "__pycache__",
@@ -553,10 +582,9 @@ def bom(
         bom_obj = ContextBOM.from_dict(data)
     elif "decisions" in data:
         bom_obj = ContextBOM.from_compiled(compiled_pack_from_dict(data))
-        console.print(
+        err_console.print(
             "[yellow]note:[/yellow] input is a compiled-pack snapshot; item details are "
-            "limited. For full fidelity, produce a BOM with `compile --bom out.json`.",
-            stderr=True,
+            "limited. For full fidelity, produce a BOM with `compile --bom out.json`."
         )
     else:
         console.print("[red]error:[/red] unrecognized input; expected a BOM or compiled-pack JSON.")
