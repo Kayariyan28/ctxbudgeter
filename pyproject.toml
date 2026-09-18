@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ctxbudgeter"
-version = "0.3.0"
+version = "0.3.1"
 description = "ContextOps toolkit for production AI agents: compile, audit, govern, visualize, and optimize LLM context before every model call. Token budgets, policy governance, PII/secret scanning, Context Bill of Materials, context diffing, Context MRI, and MCP tool budgeting. Framework-agnostic. Local-first. Deterministic."
 readme = "README.md"
 license = { text = "MIT" }
@@ -51,6 +51,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Testing",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",

@@ -4,7 +4,7 @@ All notable changes to `ctxbudgeter` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.1] - 2026-09-18
 
 ### Fixed
 
@@ -37,6 +37,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- **CI now runs on every pull request, not only those targeting `main`.** The
+  workflow filtered on `pull_request: branches: [main]`, so a stacked PR aimed at
+  another feature branch reported no checks at all — it looked unverified rather
+  than failing, which is the more dangerous of the two.
 - **Dependency floors corrected to the versions the package actually works on.**
   The previous floors advertised support that did not exist: `pydantic>=2.5` fails
   with `PydanticUserError` on the deferred `TrustLevel` annotation (194 of 250 tests
@@ -48,6 +52,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - Regression tests for the `bom` command, which previously had no CLI coverage.
+- **Python 3.14 support**, declared and tested. The interpreter already worked —
+  `requires-python` allows it — but it was absent from the classifiers and from the
+  CI matrix, so nothing verified it. 3.14 now runs in CI on Linux, macOS and Windows,
+  including the full `[dev,all]` extras.
+- Regression tests for the compiled-pack BOM path (`tests/test_bom_compiled_fidelity.py`).
 
 ## [0.3.0] - 2026-06-05
 
