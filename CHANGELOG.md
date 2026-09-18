@@ -4,6 +4,36 @@ All notable changes to `ctxbudgeter` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`bom` no longer crashes on compiled-pack input** ([#8](https://github.com/Kayariyan28/ctxbudgeter/issues/8)).
+  `ctxbudgeter bom <compiled-pack.json>` raised `TypeError: Console.print() got an
+  unexpected keyword argument 'stderr'`. rich selects the output stream when the
+  `Console` is constructed, so the advisory note now goes through a dedicated
+  `Console(stderr=True)`. Keeping the note on stderr also means `bom -f json` and
+  `bom -f markdown` emit a clean, pipeable payload on stdout.
+- **Non-ASCII output no longer crashes legacy consoles** ([#8](https://github.com/Kayariyan28/ctxbudgeter/issues/8)).
+  The CLI emits `✓`/`✗`/`•`/`—`, which raised `UnicodeEncodeError` on consoles using
+  a non-UTF-8 codec (cp1252 is still common on Windows). stdout/stderr are now
+  reconfigured to UTF-8 at startup, degrading unmappable characters instead of
+  aborting mid-render.
+
+### Changed
+
+- **Dependency floors corrected to the versions the package actually works on.**
+  The previous floors advertised support that did not exist: `pydantic>=2.5` fails
+  with `PydanticUserError` on the deferred `TrustLevel` annotation (194 of 250 tests
+  fail), and `typer>=0.9` fails with `RuntimeError: Type not yet supported:
+  pathlib.Path | None`, which makes every command — including `--version` —
+  unusable. Now `pydantic>=2.6,<3.0` and `typer>=0.15`. `rich>=13.0` is unchanged
+  and verified against rich 13.0, 13.7, 14.0 and 15.0.
+
+### Added
+
+- Regression tests for the `bom` command, which previously had no CLI coverage.
+
 ## [0.3.0] - 2026-06-05
 
 The **ContextOps** release. ctxbudgeter is now a ContextOps toolkit for production

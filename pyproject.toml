@@ -58,8 +58,14 @@ classifiers = [
     "Framework :: Pytest",
 ]
 dependencies = [
-    "pydantic>=2.5,<3.0",
-    "typer>=0.9",
+    # Floors below are the oldest versions the test suite actually passes on.
+    # pydantic < 2.6 cannot resolve the deferred `TrustLevel` annotation on
+    # ContextItem (PydanticUserError: "is not fully defined").
+    "pydantic>=2.6,<3.0",
+    # typer < 0.15 rejects PEP 604 option annotations ("RuntimeError: Type not
+    # yet supported: pathlib.Path | None"), which makes every command unusable.
+    "typer>=0.15",
+    # rich 13.0 is genuinely supported; verified against 13.0, 13.7, 14.0, 15.0.
     "rich>=13.0",
 ]
 
