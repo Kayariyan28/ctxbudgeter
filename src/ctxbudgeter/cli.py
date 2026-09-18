@@ -12,6 +12,7 @@ from pathlib import Path
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from . import __version__
@@ -276,7 +277,10 @@ def pack(
     try:
         p = load_pack(spec)
     except SpecError as e:
-        console.print(f"[red]spec error:[/red] {e}")
+        # escape(): the message names extras like `ctxbudgeter[yaml]`, and rich would
+        # parse `[yaml]` as a style tag and silently drop it — telling the user to
+        # install the package they already have.
+        console.print(f"[red]spec error:[/red] {escape(str(e))}")
         raise typer.Exit(code=2) from e
 
     compiled = p.compile()
@@ -310,7 +314,7 @@ def validate(
     issues = _validate(spec)
     if issues:
         for i in issues:
-            console.print(f"[red]✗[/red] {i}")
+            console.print(f"[red]✗[/red] {escape(str(i))}")
         raise typer.Exit(code=1)
     console.print(f"[green]✓[/green] {spec} is valid")
 
@@ -672,7 +676,11 @@ def cache_plan_cmd(
     if "included_items" in data and "schema_version" in data:
         plan = CachePlanner().analyze_bom(ContextBOM.from_dict(data))
     elif "decisions" in data:
-        plan = compiled_pack_from_dict(data).cache_plan()
+        # A snapshot re-materializes no ContextItems, so `cache_plan()` would walk an
+        # empty list and return an all-zero plan with exit 0 — a silently wrong answer.
+        # Build the BOM (whose items come from the recorded decisions) and use the
+        # content-free analyzer that exists for exactly this case.
+        plan = CachePlanner().analyze_bom(ContextBOM.from_compiled(compiled_pack_from_dict(data)))
     else:
         console.print("[red]error:[/red] expected a BOM JSON (from `compile --bom`) or compiled-pack JSON.")
         raise typer.Exit(code=2)

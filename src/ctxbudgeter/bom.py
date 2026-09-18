@@ -153,9 +153,14 @@ class ContextBOM:
             # from those rather than emitting a Bill of Materials with no materials.
             # Content-derived fields (checksum, relevance, freshness, provenance)
             # stay unset — that is the "limited detail" the CLI warns about.
-            for d in compiled.decisions:
-                if d.status == "excluded":
-                    continue
+            order = list(getattr(compiled, "restored_included_order", []) or [])
+            rank = {name: i for i, name in enumerate(order)}
+            snapshot_decisions = [d for d in compiled.decisions if d.status != "excluded"]
+            if rank:
+                # Restore prompt order; `decisions` is in scoring order, and putting a
+                # dynamic item first would wrongly collapse the cacheable prefix to 0.
+                snapshot_decisions.sort(key=lambda d: rank.get(d.name, len(rank)))
+            for d in snapshot_decisions:
                 included.append(BOMItem(
                     name=d.name,
                     kind=d.kind,
