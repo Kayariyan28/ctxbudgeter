@@ -50,7 +50,7 @@ from .scanner import ContextScanner, Finding, ScanResult
 from .scoring import DEFAULT_WEIGHTS, score_item
 from .tokenizer import TokenCounter
 
-__version__ = "0.3.1"
+__version__ = "0.3.2"
 
 __all__ = [
     "DEFAULT_WEIGHTS",

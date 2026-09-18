@@ -4,6 +4,32 @@ All notable changes to `ctxbudgeter` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2] - 2026-09-19
+
+Documentation only. No functional change: `src/` is byte-identical to 0.3.1.
+
+0.3.1's README improvements landed on `main` *after* the release was tagged, so the
+project page on PyPI still advertised 5 of the 15 CLI commands and carried none of the
+0.3.1 notes. PyPI does not allow re-uploading a version, so this release exists to ship
+the current README as the package's long description.
+
+### Added
+
+- **Terminal demo at the top of the README** — a 90-second recording of the full toolkit
+  run against a support-agent project: find a leaked credential, redact it before the
+  model call, record what was sent, fail the build. Reproduce it with
+  [`docs/demo/demo.sh`](docs/demo/demo.sh), which generates its fixture at runtime.
+- **Usage for all 15 CLI commands.** `bom`, `diff`, `eval`, `cache-plan`, `viz`,
+  `viz-diff` and the three `mcp-*` commands previously appeared nowhere in the README,
+  which made the audit, governance and MCP-budgeting surfaces undiscoverable.
+- A "What's new in 0.3.1" section, and supported Python stated as 3.10 – 3.14 to match
+  the classifiers and the CI matrix.
+
+### Changed
+
+- The banner no longer carries a hard-coded version chip, which would have misstated the
+  version on every release after the one it was drawn for.
+
 ## [0.3.1] - 2026-09-18
 
 ### Fixed
