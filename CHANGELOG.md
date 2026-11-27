@@ -66,6 +66,20 @@ Fully backward compatible: every 0.3 import path and CLI command is unchanged.
   `examples/context_runtime_demo.py`, `examples/ctxbench_demo.py`.
 - 107 new tests (383 total).
 
+### Changed
+
+- **README rewritten** around both halves of the toolkit (Adaptive Context Engine and
+  ContextOps): install extras, six quick-start paths (live runtime, OpenAI / Anthropic agent
+  loops, MCP clients, the skill, benchmarking, compile-time packs), an architecture diagram,
+  a supported tools and libraries matrix, a full CLI reference and research foundations.
+- **New README banner** in the K28 D2 design system, authored as a page in
+  [`docs/banner/`](docs/banner/) and rendered by `docs/generate_banner.py` with headless
+  Chrome (Playwright is no longer needed).
+- **New animated terminal demo** of the 0.4 workflow
+  ([`docs/ctxbudgeter-0.4-demo.svg`](docs/ctxbudgeter-0.4-demo.svg)), generated from real
+  command output by [`docs/demo/make_terminal_svg.py`](docs/demo/make_terminal_svg.py). The
+  0.3 ContextOps demo is kept.
+
 ## [0.3.2] - 2026-09-19
 
 Documentation only. No functional change: `src/` is byte-identical to 0.3.1.

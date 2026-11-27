@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/banner.png?v=0.3.1" alt="ctxbudgeter — ContextOps toolkit for AI agents" width="100%" />
+  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/banner.png?v=0.4.0" alt="ctxbudgeter 0.4 — agents manage their own context, ctxbudgeter governs it: governed context API, graduated autonomy, CTXBench" width="100%" />
 </p>
 
 # ctxbudgeter
@@ -9,217 +9,237 @@
 [![Downloads](https://static.pepy.tech/badge/ctxbudgeter)](https://pepy.tech/projects/ctxbudgeter)
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml/badge.svg)](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml)
+![MCP](https://img.shields.io/badge/MCP-server-C9E35B)
+![CTXBench](https://img.shields.io/badge/CTXBench-included-111111)
+
+> **The model-agnostic context intelligence layer for AI agents.**
+> It enables, teaches, governs and evaluates how agents manage their context — before every
+> model call *and* while the agent runs.
 
 > **If ctxbudgeter saved you tokens, time, or a 3am incident — drop a ⭐ on the [repo](https://github.com/Kayariyan28/ctxbudgeter). It's the fuel for me to keep shipping new features.**
 
-> **ctxbudgeter helps AI agents know what to know.**
+Long-running agents fill their context windows with tool output, documents and their own
+turns. Today's harnesses handle that with a blunt rule: when the window fills, summarize the
+history. Research shows agents can do better by managing their own context — NVIDIA found
+GPT-6.1 Sol nearly triples its score at a 32K budget when it controls compaction itself — but
+also that models differ wildly. Some never compact and give up when the window fills, some
+compact far too early, some compress until they keep reopening what they threw away.
 
-ctxbudgeter is a **model-agnostic context intelligence layer for production AI agents**.
-It compiles, audits, governs, visualizes, and optimizes LLM context *before every model
-call* — so your agents control token budgets, reduce context waste, detect risky context,
-preserve provenance, improve prompt-cache layout, and produce auditable Context Bills of
-Materials.
+ctxbudgeter gives you both halves of the answer:
 
-**New in 0.4:** it also governs context *while the agent runs*. Agents get a context API
-to compact, pin, archive and recall their own history; ctxbudgeter checks every edit,
-grants autonomy as agents earn it, benchmarks how well they manage context
-(CTXBench), and learns per-model policies from their behaviour.
-[Jump to the Adaptive Context Engine →](#new-in-04--the-adaptive-context-engine)
+| | **Adaptive Context Engine** (new in 0.4) | **ContextOps** (0.1 – 0.3) |
+|---|---|---|
+| When | while the agent runs | before every model call |
+| What | a governed context API agents use to compact, pin, archive and recall their own history; graduated autonomy; a portable skill; per-model behavioural learning; the CTXBench benchmark; training data | a deterministic compiler that selects, budgets, scans, redacts and audits context, with a Context Bill of Materials, diffing, Context MRI and MCP tool budgeting |
+| Guarantee | agents propose, ctxbudgeter governs: protected context can't be removed, originals are archived not deleted, every decision is traced | every included and excluded item has a reason; same inputs, same output |
 
-**ctxbudgeter is not an agent framework.** It sits in front of — and, with 0.4, alongside —
-LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI, Microsoft Agent Framework, or your own
-loop.
-
-> Agent observability tools show what the agent *did*. ctxbudgeter shows what the agent
-> was *allowed to know* before it acted.
-
-```text
-ContextOps · token budgets · policy governance · PII/secret scanning ·
-Context Bill of Materials · context diffing · Context MRI · MCP tool budgeting ·
-governed context runtime · graduated autonomy · context skill · CTXBench · MCP server
-```
+**ctxbudgeter is not an agent framework.** It sits in front of and alongside LangGraph, CrewAI,
+OpenAI Agents SDK, PydanticAI, Microsoft Agent Framework, Claude Code, any MCP client, or your
+own loop. No LLM calls in the core; local-first; deterministic.
 
 ## See it work
 
-90 seconds, real commands, real project — a customer-support agent whose config file still
-has a live Stripe key in it. ctxbudgeter finds it, redacts it before the model call, records
-what was sent, and fails the build.
-
 <p align="center">
-  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/ctxbudgeter-demo.svg" alt="ctxbudgeter terminal demo: scan, compile under budget, detect a leaked Stripe key, redact it, produce a Context Bill of Materials, fail a CI gate, and plan prompt-cache layout" width="100%" />
+  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/ctxbudgeter-0.4-demo.svg" alt="Animated terminal: ctxbudgeter 0.4 — governed context API, CTXBench, autonomy certification, behavioural profiling, dataset export, skill export and the MCP server" width="100%" />
 </p>
 
+Every line is real output, recorded by [`docs/demo/make_terminal_svg.py`](docs/demo/make_terminal_svg.py).
+
 <details>
-<summary>What each step proves</summary>
+<summary>What the demo shows</summary>
 
-| # | Command | What it shows |
-|--:|---------|---------------|
-| 1 | `scan` | Inventory: 695 tokens across 7 files, with suggested priorities and cache policies |
-| 2 | `compile --budget 700` | Deterministic selection — every exclusion carries a reason (`302 tokens exceeds remaining 144`) |
-| 3 | `scan-risk` | Local PII/secret detection with masked previews: live Stripe key, DB URL with credentials, internal email and phone |
-| 4 | `compile --policy` | `settings.py` 107 → 59 tokens, marked `REDACTED`; the key is absent from the compiled pack |
-| 5 | `bom` | Context Bill of Materials — an auditable record of what the model was allowed to know |
-| 6 | `eval` | CI gate: risk 100 against a `max_risk_score: 20` budget → **exit 1** |
-| 7 | `diff --fail-on-risk-increase` | Branch vs. main: risk score **+100**, one file added → **exit 1** |
-| 8 | `cache-plan` | 647 of 658 tokens in a stable prefix, 98/100 cache efficiency |
-| 9 | `mcp-audit` / `mcp-select` | 5 MCP tools cost 290 tokens before the user speaks; picks the right 2 under a 150-token budget |
-| 10 | `viz` | Self-contained HTML Context MRI, no extra dependencies to render |
-
-The project and script used to record this live in [`docs/demo/`](docs/demo/) — run
-`docs/demo/demo.sh` to reproduce it.
+| # | Command | What it proves |
+|--:|---------|----------------|
+| 1 | `python examples/context_runtime_demo.py` | The context API end to end: the timing verdict, a diagnosis, a cache-aware plan, a governed compaction that keeps 100% of facts, a **denied** attempt to archive the system prompt, recall of an archived original, and a 10% prefill saving from suffix KV reuse |
+| 2 | `ctxbudgeter bench -a reckless …` | CTXBench: an agent that edits protected context scores 0 with critical violations when ungoverned, and scores well with **zero** violations under the learned, governed policy |
+| 3 | `ctxbudgeter autonomy certify` | Autonomy is earned on evidence — 2 episodes are not enough to promote |
+| 4 | `ctxbudgeter profile` | The agent's own traces reveal it as `unsafe`; the tuner proposes explicit, attributable rules |
+| 5 | `ctxbudgeter train-export` | Decisions become SFT, DPO preference and reward datasets |
+| 6 | `ctxbudgeter skill export` | The portable `context-management` skill, ready for Claude Code or any SKILL.md loader |
+| 7 | `ctxbudgeter serve-mcp` | The same governed API for any MCP client |
 
 </details>
 
-## ContextOps in 30 seconds
+## Contents
 
-```python
-from ctxbudgeter import ContextPack, ContextPolicy
-
-policy = ContextPolicy(max_tokens=24_000, reserved_output_tokens=4_000,
-                       block_secrets=True, forbidden_sources=[".env"], redact_sensitive=True)
-
-pack = ContextPack(model="claude-sonnet-4.6", policy=policy)
-pack.add(name="system", content="You are a careful agent.", kind="system",
-         required=True, cache_policy="stable", source="repo/system.md", trust_level="verified")
-pack.add(name="task", content="Resolve the refund request.", kind="task", required=True)
-
-compiled = pack.compile(task="Resolve refund request")
-print(compiled.report())          # what entered, what didn't, and why
-bom = compiled.bom                 # auditable Bill of Materials
-bom.to_json("context_bom.json")   # commit + diff in CI
-
-from ctxbudgeter.viz import ContextMRI          # pip install "ctxbudgeter[viz]"
-ContextMRI.from_compiled(compiled).export_html("context_mri.html")
-```
-
-New in **0.3 (ContextOps)**: `ContextPolicy`, `ContextScanner`, `ContextProvenance`,
-`ContextBOM`, `ContextDiff`, `CachePlanner`, `ContextEval`, `MCPToolBudgeter`, and the
-**Context MRI** visualization. See [`docs/contextops.md`](docs/contextops.md). Fully
-backward compatible with the 0.2 API. Deep-dive docs: [BOM](docs/context_bom.md) ·
-[Context MRI](docs/context_mri.md) · [MCP budgeting](docs/mcp_tool_budgeting.md) ·
-[security](docs/security.md) · **0.4:** [Adaptive Context Engine](docs/context_intelligence.md) ·
-[CTXBench results](docs/ctxbench/README.md) ·
-[context-management skill](src/ctxbudgeter/skills/context-management/SKILL.md).
-
-```text
-Webpack for agent context  •  pytest for prompt/context quality  •  token budget manager
-```
-
-## What you get
-
-- **Token budget compiler** — deterministic, explainable selection with full inclusion/exclusion reasons
-- **Just-in-time `Reference`s** — lazy pointers (file paths, URLs, queries) that only load if they fit
-- **Eval / assert layer + pytest plugin** — `assert_includes`, `assert_health_at_least`, golden snapshots
-- **Cache-aware adapters** — Anthropic `cache_control` placement, OpenAI `prompt_cache_key`, LangChain & PydanticAI
-- **Multi-modal attachments** — images and structured tool schemas flow through to OpenAI/Anthropic payloads
-- **Sensitivity enforcement** — `allow` | `warn` | `refuse` | `redact` for items tagged `secret`
-- **Memory store** (Write strategy) — persist agent notes between turns, query them back into context
-- **Isolation** (Isolate strategy) — `pack.fork()` builds a subagent-scoped pack with its own budget
-- **Async compile** — concurrent resolution of async References, async-aware compressor hook
-- **Declarative YAML/JSON specs** — check pack configuration into git, CI-friendly
-- **CLI** — 22 commands covering compile, audit, diff, eval, cache planning, visualization, MCP tool budgeting, and (0.4) benchmarking, profiling, training-data export, autonomy certification, the context skill and an MCP server
-- **Adaptive Context Engine (0.4)** — governed, model-driven context management: context API, edit governance, graduated autonomy, portable skill, behavioural learning, CTXBench
-- **Zero LLM calls in the core** — local-first, deterministic, fast
-
-## New in 0.4 — the Adaptive Context Engine
-
-> **The agent proposes. ctxbudgeter governs. The harness executes. The evaluator teaches.**
-
-0.4 lets agents manage their **own** context while it evolves, and makes that safe,
-measurable and learnable on any model. It builds on NVIDIA's study
-[*Letting Models Manage Their Own Context*](https://arxiv.org/abs/2611.34147): models that
-use a context API well beat harness-driven compaction, but models differ wildly. Some
-never compact, some compact far too early, some compress until they keep reopening
-archives. Full design: [`docs/context_intelligence.md`](docs/context_intelligence.md).
-
-```python
-from ctxbudgeter.runtime import ContextRuntime
-
-rt = ContextRuntime(model="gpt-6.1", budget=32_000, reserved_output_tokens=4_000)
-rt.add(SYSTEM_PROMPT, kind="system")              # protected: agents can't remove it
-rt.add("Find FY2019 receipts for ALPHA-7.", kind="task")
-rt.add(tool_output, kind="tool_result", source="corpus/treasury_2019.txt")
-rt.step()                                         # one model request (budget + KV-cost accounting)
-
-rt.budget()["timing"]      # block | defer | allow | compact_now  (SelfCompact-style rubric)
-rt.diagnose()              # duplicates, superseded/conflicting facts, stale logs, secrets
-rt.plan()                  # cache-aware edits that reach a target usage
-rt.compact("3", "17", summary="...")   # governed; originals archived, recall by tag
-rt.recall("9")             # NOOA-style: compacted originals stay recoverable
-rt.evaluate()              # compression, fact retention, reopen rate, prefill saved by suffix KV reuse
-```
-
-| Package | What it adds |
-|---|---|
-| `ctxbudgeter.runtime` | Live context API: `inspect · budget · diagnose · plan · compact · pin · archive · recall · checkpoint · rollback · evaluate`, timing rubric, cache-aware planner, prefill cost model (prefix caching vs suffix KV reuse), harness-compaction baseline, JSONL decision traces |
-| `ctxbudgeter.governance` | `EditGovernor` + `ContextEditPolicy`: protected / pinned / recent context, anti-"context-anxiety" usage floor, over-compression and fact-loss checks, secrets redacted out of summaries, provenance footers. **Graduated autonomy** L0 observe → L1 recommend → L2 supervised → L3 governed → L4 adaptive, with evidence-based certification and automatic demotion |
-| `ctxbudgeter.skills` | A portable [`context-management` SKILL.md](src/ctxbudgeter/skills/context-management/SKILL.md) (with API reference and worked examples), rendered with live thresholds, autonomy level and model-specific adaptations |
-| `ctxbudgeter.adaptive` | Behavioural learning without touching weights: profile traces → classify (avoidant, anxious, over-compressing, lossy, under-recovering, stale-keeping, unsafe) → tune → **optimize on calibration tasks** → validate → versioned `PolicyStore`. Ships priors measured in the NVIDIA paper |
-| `ctxbudgeter.bench` | **CTXBench**: seeded long-horizon tasks in 5 families, 4 modes (harness / unrestricted / guided / adaptive), **Context Intelligence Score**, plus `LLMContextAgent` for real OpenAI/Anthropic models |
-| `ctxbudgeter.train` | Decision traces → SFT, DPO preference pairs, RL reward records |
-| `ctxbudgeter.adapters` | Context tools for OpenAI / Anthropic function calling, a stdio **MCP server**, and `ContextHarness` for any agent loop |
-
-**CTXBench results** (`ctxbudgeter bench`, 20 episodes per mode: 5 families × 2 tasks × 4K/8K budgets; reproduce with [`docs/ctxbench/`](docs/ctxbench/)):
-
-| Reference agent | Harness compaction | Unrestricted API | Guided (skill) | **Adaptive (governed + learned)** |
-|---|---:|---:|---:|---:|
-| competent | 38.4 | 77.9 | 77.8 | **77.8** |
-| anxious (compacts early) | 38.4 | 82.6 | 80.3 | **80.0** |
-| avoidant (never compacts) | 38.4 | 37.5 | 37.5 | **73.3** |
-| reckless (touches protected context) | 38.4 | 0.0 · 20 critical | 0.0 · 20 critical | **76.4 · 0 critical** |
-
-Governance turns the two failure archetypes into competent context managers, and the
-optimizer leaves agents that are already good alone. In one run it rejected a tuned
-compression cap that would have stalled the anxious agent. The reference agents are
-deterministic behaviour models used for reproducible evaluation; benchmark your own model
-with `LLMContextAgent(openai_complete(...))` or `anthropic_complete(...)`.
-
-```bash
-ctxbudgeter skill export ~/.claude/skills          # install the skill for Claude Code (or any SKILL.md loader)
-ctxbudgeter bench -a avoidant -o report.json --traces traces.jsonl
-ctxbudgeter profile traces.jsonl --store .ctxbudgeter/policies
-ctxbudgeter autonomy certify report.json           # promote / hold / demote context autonomy
-ctxbudgeter train-export traces.jsonl -o datasets/ # sft.jsonl · preferences.jsonl · rewards.jsonl
-ctxbudgeter serve-mcp --state .ctx/session.json    # governed context API over MCP
-```
-
-## What's new in 0.3.1
-
-A correctness release. Full detail in [CHANGELOG.md](CHANGELOG.md).
-
-- **`bom` no longer crashes on a compiled-pack snapshot**
-  ([#8](https://github.com/Kayariyan28/ctxbudgeter/issues/8)) — it raised
-  `TypeError: Console.print() got an unexpected keyword argument 'stderr'`.
-- **A BOM from a snapshot no longer under-reports risk.** Governance metadata was lost
-  rebuilding a `CompiledPack` from JSON, so `risk_score` came back `0` on context whose
-  snapshot recorded policy violations and scanner findings — an `eval` gate could pass
-  on context containing detected secrets. Both BOM paths now agree.
-- **`cache-plan` no longer returns an all-zero plan** for a compiled-pack snapshot, and
-  items restored from a snapshot keep their prompt assembly order.
-- **No more `UnicodeEncodeError` on non-UTF-8 consoles** (cp1252 is still common on
-  Windows).
-- **Dependency floors corrected** to versions that genuinely work: `pydantic>=2.6`,
-  `typer>=0.16`. The previous floors admitted builds where the CLI could not render a
-  single `--help` screen.
-- **Python 3.14 declared and tested** across Linux, macOS and Windows.
+- [Install](#install)
+- [Quick start](#quick-start) — [govern a live agent](#1-govern-a-live-agents-context) · [plug into your loop](#2-plug-into-your-agent-loop) · [MCP clients](#3-use-it-from-claude-code-claude-desktop-or-cursor-mcp) · [the skill](#4-teach-any-agent-with-the-skill) · [benchmark](#5-benchmark-and-improve-an-agent) · [compile context](#6-compile-context-before-a-call)
+- [Architecture](#architecture)
+- [Part 1 — Adaptive Context Engine](#part-1--adaptive-context-engine)
+- [Part 2 — ContextOps](#part-2--contextops)
+- [Supported tools and libraries](#supported-tools-and-libraries)
+- [CLI reference](#cli-reference)
+- [Wire it into CI](#wire-it-into-ci)
+- [How it works](#how-it-works)
+- [Research foundations](#research-foundations)
+- [Positioning](#positioning) · [Design choices](#design-choices) · [Documentation](#documentation) · [Author](#author) · [License](#license)
 
 ## Install
 
 ```bash
 pip install ctxbudgeter
-
-# Optional extras
-pip install "ctxbudgeter[tiktoken]"        # accurate OpenAI/Anthropic-proxy tokenization
-pip install "ctxbudgeter[yaml]"            # YAML pack specs
-pip install "ctxbudgeter[http]"            # http_get loader for References
-pip install "ctxbudgeter[anthropic,openai,langchain]"
-pip install "ctxbudgeter[all]"             # everything
 ```
 
-Python 3.10 – 3.14, tested on Linux, macOS and Windows. Adapters are lazy-imported —
-you only pay for the SDKs you actually use.
+| Extra | Adds | When you need it |
+|---|---|---|
+| `ctxbudgeter[tiktoken]` | `tiktoken` | exact OpenAI token counts (cl100k / o200k); a close proxy for Anthropic |
+| `ctxbudgeter[yaml]` | `PyYAML` | YAML pack specs and policy files |
+| `ctxbudgeter[http]` | `requests` | the `http_get` loader for just-in-time References |
+| `ctxbudgeter[openai]` / `[anthropic]` / `[langchain]` | the SDKs | calling models through the adapters, `LLMContextAgent` |
+| `ctxbudgeter[viz]` | `jinja2`, `plotly`, `networkx` | richer Context MRI / MCP map rendering |
+| `ctxbudgeter[all]` | everything above | |
+
+Python 3.10 – 3.14 on Linux, macOS and Windows. The only required dependencies are `pydantic`,
+`typer` and `rich`. Adapters are lazy-imported, the MCP server needs no MCP SDK, and nothing in
+the core calls an LLM.
 
 ## Quick start
+
+### 1. Govern a live agent's context
+
+```python
+from ctxbudgeter.runtime import ContextRuntime
+
+rt = ContextRuntime(model="gpt-4.1", budget=32_000, reserved_output_tokens=4_000)
+rt.add("You are a research agent. Report exact figures.", kind="system")   # protected
+rt.add("Find FY2019 receipts for ALPHA-7.", kind="task")                    # protected
+rt.add(document_text, kind="document", source="corpus/treasury_2019.txt")
+rt.step()                          # book one model request: budget + prefill-cost accounting
+
+rt.budget()["timing"]              # block | defer | allow | compact_now
+rt.diagnose()                      # duplicates, conflicting facts, stale logs, secrets
+plan = rt.plan()                   # cache-aware edits that reach a target usage
+rt.apply_plan(plan)                # or rt.compact("3", "17", summary="...")
+rt.archive("1")                    # → denied: protected_context (critical)
+rt.recall("9")                     # compacted originals stay recoverable by tag
+rt.evaluate()                      # compression, fact retention, reopen rate, prefill saved
+```
+
+Run the full version: [`examples/context_runtime_demo.py`](examples/context_runtime_demo.py).
+
+### 2. Plug into your agent loop
+
+`ContextHarness` turns the runtime into model requests and executes the model's `context_*`
+tool calls through the governor. Your own tools pass straight through.
+
+**OpenAI**
+
+```python
+import json
+from openai import OpenAI
+from ctxbudgeter.runtime import ContextRuntime
+from ctxbudgeter.adapters import ContextHarness
+
+client = OpenAI()
+rt = ContextRuntime(model="gpt-4.1", budget=64_000, reserved_output_tokens=4_000)
+rt.add("You are a support agent.", kind="system")
+rt.add("Answer the customer's refund question.", kind="task")
+harness = ContextHarness(rt, provider="openai")        # adds the skill + context tools
+
+while True:
+    req = harness.request(extra_tools=MY_TOOLS)         # messages, tools, pressure warning
+    msg = client.chat.completions.create(model="gpt-4.1", **req).choices[0].message
+    if not msg.tool_calls:
+        print(msg.content)
+        break
+    ctx_results, other_calls = harness.handle_tool_calls(msg.tool_calls)  # governed
+    for r in ctx_results:
+        rt.add(f"{r['name']} → {json.dumps(r['output'])[:300]}", kind="tool_result", category="compressible")
+    for call in other_calls:                             # your tools
+        rt.add(run_my_tool(call), kind="tool_result", source=call.function.name)
+```
+
+**Anthropic**
+
+```python
+from anthropic import Anthropic
+
+client = Anthropic()
+harness = ContextHarness(rt, provider="anthropic")
+
+while True:
+    resp = client.messages.create(model="claude-sonnet-4-6", max_tokens=2048, **harness.request())
+    if resp.stop_reason != "tool_use":
+        break
+    ctx_results, other_calls = harness.handle_tool_calls(resp.content)    # tool_use blocks
+    for r in ctx_results:
+        rt.add(f"{r['name']} → {json.dumps(r['output'])[:300]}", kind="tool_result", category="compressible")
+    for block in other_calls:
+        if getattr(block, "type", None) == "tool_use":
+            rt.add(run_my_tool(block), kind="tool_result", source=block.name)
+```
+
+Harness can't hand over context editing? Use `ContextHarness(rt, guidance_only=True)`: no
+context tools are exposed, autonomy is forced to L1, and the plan is surfaced as advice.
+Building tool calls yourself? `openai_tools()`, `anthropic_tools()`, `mcp_tools()` and
+`ContextToolDispatcher(rt).call(name, args)` are the building blocks.
+
+### 3. Use it from Claude Code, Claude Desktop or Cursor (MCP)
+
+```bash
+# Claude Code
+claude mcp add ctxbudgeter -- ctxbudgeter serve-mcp --state .ctx/session.json --allow-add
+```
+
+```jsonc
+// Claude Desktop (claude_desktop_config.json) or Cursor (.cursor/mcp.json)
+{
+  "mcpServers": {
+    "ctxbudgeter": {
+      "command": "ctxbudgeter",
+      "args": ["serve-mcp", "--budget", "128000", "--state", ".ctx/session.json", "--allow-add"]
+    }
+  }
+}
+```
+
+The server speaks JSON-RPC over stdio (`initialize`, `tools/list`, `tools/call`,
+`resources/list`, `resources/read`, `ping`), exposes the 14 `context_*` tools and the skill as
+the resource `ctxbudgeter://skills/context-management`, and persists the session, archive and
+decision traces next to `--state`. An MCP server can't rewrite a client's *internal* context
+window, so over MCP the runtime acts as a governed external working-context store
+(`--allow-add` lets the client push events). For full control, embed the runtime (2).
+
+### 4. Teach any agent with the skill
+
+```bash
+ctxbudgeter skill export ~/.claude/skills             # Claude Code, or any SKILL.md loader
+ctxbudgeter skill show --brief --model kimi-k3        # system-prompt section, tuned to the model
+```
+
+```python
+from ctxbudgeter import render_guidance
+system_prompt += render_guidance(policy=rt.policy, autonomy=3, brief=True)
+```
+
+The [`context-management` skill](src/ctxbudgeter/skills/context-management/SKILL.md) teaches
+context categories, when to compact (and when not to), how to write summaries that keep
+numbers, identifiers and corrections, how to recover archived facts, and how to read governor
+denials — with an [API reference](src/ctxbudgeter/skills/context-management/references/api.md)
+and [worked good/bad decisions](src/ctxbudgeter/skills/context-management/references/examples.md).
+
+### 5. Benchmark and improve an agent
+
+```bash
+ctxbudgeter bench -a competent --budgets 4000,8000 -o report.json --traces traces.jsonl
+ctxbudgeter profile traces.jsonl --store .ctxbudgeter/policies    # behaviours → tuned policy
+ctxbudgeter autonomy certify report.json                         # promote / hold / demote
+ctxbudgeter train-export traces.jsonl -o datasets/               # SFT · DPO · rewards
+```
+
+Benchmark a real model instead of a reference agent:
+
+```python
+from openai import OpenAI
+from ctxbudgeter.bench import BenchRunner, LLMContextAgent, TaskGenerator, openai_complete
+
+tasks = TaskGenerator(seed=7).suite(n=2, stream_tokens=12_000)
+agent = lambda: LLMContextAgent(openai_complete(OpenAI(), "gpt-4.1"))
+report = BenchRunner(tasks, agent, budgets=[8_000], model="gpt-4.1").run()
+print(report.to_markdown())
+```
+
+### 6. Compile context before a call
 
 ```python
 from ctxbudgeter import ContextPack
@@ -270,7 +290,171 @@ Context health score: 87/100
 Tokenizer: tiktoken
 ```
 
-## Just-in-time References
+## Architecture
+
+```mermaid
+flowchart LR
+    subgraph L1["Level 1 · instructional"]
+      SK["skills<br/>SKILL.md + references<br/>rendered per policy, autonomy, model"]
+    end
+    A["Agent / model"] -- "context_* tool calls" --> AD["adapters<br/>OpenAI · Anthropic · MCP · ContextHarness"]
+    SK -. guidance .-> A
+    AD -- proposals --> RT["runtime.ContextRuntime<br/>events · archive · rubric · planner · prefill cost"]
+    RT -- review --> GV["governance<br/>EditGovernor + ContextEditPolicy<br/>autonomy L0–L4"]
+    GV -- "approve · modify · deny · queue" --> RT
+    RT -- DecisionTrace JSONL --> AP["adaptive (Level 2)<br/>profile → tune → optimize → validate"]
+    RT -- traces --> BN["bench · CTXBench<br/>4 modes · CIS"]
+    RT -- traces --> TR["train (Level 3)<br/>SFT · DPO · rewards"]
+    AP -- "validated policy + guidance" --> GV
+    BN -- evidence --> GV
+    RT -- to_context_pack --> CO["core · ContextOps<br/>compile · policy · scan · BOM · MRI"]
+```
+
+*The agent proposes. ctxbudgeter governs. The harness executes. The evaluator teaches.*
+Full design: [`docs/context_intelligence.md`](docs/context_intelligence.md).
+
+## Part 1 — Adaptive Context Engine
+
+### The context API (`ctxbudgeter.runtime`)
+
+The agent's working context is a list of tagged events (`[e7 tool_result]`). A summary that
+replaced events 3–17 is tagged `3..17`, and its originals move to an append-only archive,
+recoverable by tag.
+
+| Operation | What it does |
+|---|---|
+| `inspect()` | composition by category and kind, every event |
+| `budget()` | used / free / usage, pressure level, timing verdict |
+| `diagnose()` | duplicates, superseded and conflicting facts, stale, oversized, repetitive and sensitive events — with recoverable tokens and a suggested op |
+| `plan()` | cache-aware compact/archive ops to a target usage; never touches protected, pinned or recent events; avoids re-summarizing summaries |
+| `compact(start, end, summary)` | governed range → summary; originals archived; provenance footer added |
+| `pin` / `unpin` | protect evidence (pin budget applies) |
+| `archive(*tags)` | move inactive events out, recoverable |
+| `recall(tag, restore=False)` | read an archived original; `restore=True` re-inserts it (governed) |
+| `search_archive` / `recall_hints` | find archived originals by keyword or by the question's identifiers |
+| `checkpoint` / `rollback` | snapshot and revert; automatic checkpoint before destructive edits at L3+ |
+| `evaluate(trace_id=None)` | one decision or the whole session |
+| `signal(phase)` | `exploring · mid_derivation · stuck · subtask_complete · converging · answering` |
+
+`step()` books each model request: it enforces the hard budget (dropping the oldest
+unprotected events if exceeded, as harnesses do), runs governed fallback compaction when the
+policy enables it, and records prefill tokens under **prefix caching vs suffix KV reuse**.
+
+### Governance and graduated autonomy (`ctxbudgeter.governance`)
+
+| Rule | Severity | Blocks |
+|---|---|---|
+| `protected_context` | critical | edits to system instructions, permissions, user requirements |
+| `pinned_context` / `recent_context` | error | edits to pinned or the most recent events |
+| `premature_compaction` / `premature_archive` | error | compaction while plenty of space remains ("context anxiety") |
+| `over_compression` | error | summaries far smaller than their range |
+| `critical_fact_loss` / `summary_detail_loss` | error | summaries that drop task-critical numbers and identifiers |
+| `pin_budget`, `restore_over_limit`, `compaction_span`, `mutation_rate` | error | runaway pins, restores, spans and edit rates |
+| `secret_in_summary` | redacted / critical | secrets or PII re-entering context through a summary |
+
+| Level | Name | Agent edits… |
+|---|---|---|
+| L0 | Observe | are refused; read-only calls work |
+| L1 | Recommend | become recommendations for the harness |
+| L2 | Supervised | queue for an approver (human or callback), re-validated on approval |
+| L3 | Governed | apply immediately, with automatic checkpoints |
+| L4 | Adaptive | apply under validated, model-specific policies |
+
+Agents are promoted one level at a time on held-out evidence (L2: ≥10 episodes, CIS ≥ 60;
+L3: ≥20, CIS ≥ 75, retention ≥ 0.8; L4: ≥30, CIS ≥ 85, retention ≥ 0.9; zero critical
+violations) and demoted automatically. `AutonomyRegistry` keeps an auditable history.
+
+### Behavioural learning (`ctxbudgeter.adaptive`)
+
+1. **Profile** decision traces per model — compaction rate, timing, compression, reopen rate,
+   retention, denials, critical violations, overflow, recovery.
+2. **Classify**: `avoidant`, `anxious`, `over_compressing`, `lossy`, `under_recovering`,
+   `stale_keeping`, `unsafe`. Before you have traces, priors measured in the NVIDIA study
+   cover GPT-6.1 Sol, Kimi K3, DeepSeek V4 Pro and Claude Opus 5.5.
+3. **Tune** with explicit, attributable rules (e.g. *anxious → 70% floor + timing instruction*).
+4. **Optimize**: the tuned policy, one ablation per rule, and the base policy compete on
+   calibration tasks. Tuning proposes; evidence decides.
+5. **Validate and version** in a `PolicyStore`; transfers to a new model start unvalidated.
+
+### CTXBench (`ctxbudgeter.bench`)
+
+Seeded long-horizon tasks in five families (research, coding, analytics, workflow,
+multi-agent) with planted facts, late corrections, duplicates and number-dense distractors —
+several times larger than the budget. Four modes: `harness` (summarize at 80%, keep the last
+10 events), `unrestricted` (API, no guidance, nothing blocked), `guided` (skill + rubric),
+`adaptive` (governed, learned on separate calibration tasks).
+
+**Context Intelligence Score** = 100 × (0.40 accuracy + 0.25 retention + 0.20 efficiency +
+0.15 recovery). A committed critical violation sets it to 0.
+
+| Reference agent | Harness compaction | Unrestricted API | Guided (skill) | **Adaptive** |
+|---|---:|---:|---:|---:|
+| competent | 38.4 | 77.9 | 77.8 | **77.8** |
+| anxious (compacts early) | 38.4 | 82.6 | 80.3 | **80.0** |
+| avoidant (never compacts) | 38.4 | 37.5 | 37.5 | **73.3** |
+| reckless (touches protected context) | 38.4 | 0.0 · 20 critical | 0.0 · 20 critical | **76.4 · 0 critical** |
+
+20 episodes per mode; reports, per-episode JSON and the reproduction command in
+[`docs/ctxbench/`](docs/ctxbench/README.md). The reference agents are deterministic behaviour
+models of the archetypes in the paper, for reproducible evaluation — benchmark real models with
+`LLMContextAgent`.
+
+### Training data (`ctxbudgeter.train`)
+
+Outcome-labelled decisions become `sft.jsonl` (OpenAI chat fine-tuning format with tool
+calls), `preferences.jsonl` (conversational DPO: prompt / chosen / rejected) and
+`rewards.jsonl` (shaped per-decision reward plus episode return) — for teaching context
+management at the weight level on models you can train.
+
+## Part 2 — ContextOps
+
+Compile, audit and govern exactly what the model is allowed to know before each call.
+
+```python
+from ctxbudgeter import ContextPack, ContextPolicy
+
+policy = ContextPolicy(max_tokens=24_000, reserved_output_tokens=4_000,
+                       block_secrets=True, forbidden_sources=[".env"], redact_sensitive=True)
+
+pack = ContextPack(model="claude-sonnet-4.6", policy=policy)
+pack.add(name="system", content="You are a careful agent.", kind="system",
+         required=True, cache_policy="stable", source="repo/system.md", trust_level="verified")
+pack.add(name="task", content="Resolve the refund request.", kind="task", required=True)
+
+compiled = pack.compile(task="Resolve refund request")
+print(compiled.report())          # what entered, what didn't, and why
+bom = compiled.bom                 # auditable Bill of Materials
+bom.to_json("context_bom.json")   # commit + diff in CI
+
+from ctxbudgeter.viz import ContextMRI          # pip install "ctxbudgeter[viz]"
+ContextMRI.from_compiled(compiled).export_html("context_mri.html")
+```
+
+<details>
+<summary>The ContextOps terminal demo (90 seconds)</summary>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Kayariyan28/ctxbudgeter/main/docs/ctxbudgeter-demo.svg" alt="ctxbudgeter terminal demo: scan, compile under budget, detect a leaked Stripe key, redact it, produce a Context Bill of Materials, fail a CI gate, and plan prompt-cache layout" width="100%" />
+</p>
+
+A customer-support agent whose config file still has a live Stripe key in it: ctxbudgeter
+finds it, redacts it before the model call, records what was sent, and fails the build.
+Reproduce with [`docs/demo/demo.sh`](docs/demo/demo.sh).
+
+</details>
+
+What you get:
+
+- **Token budget compiler** — deterministic, explainable selection with full inclusion/exclusion reasons
+- **Policy governance and PII/secret scanning** — `ContextPolicy`, `ContextScanner`, redaction, provenance
+- **Context Bill of Materials, diffing and Context MRI** — auditable records, CI gates, visual reports
+- **Just-in-time `Reference`s** — lazy pointers (file paths, URLs, queries) that only load if they fit
+- **Eval / assert layer + pytest plugin** — `assert_includes`, `assert_health_at_least`, golden snapshots
+- **Cache-aware adapters** — Anthropic `cache_control`, OpenAI `prompt_cache_key`, LangChain, LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI
+- **MCP tool budgeting** — audit tool schemas and select the right tools under a token budget
+- **Multi-modal attachments, sensitivity enforcement, memory, isolation, async compile, YAML specs**
+
+### Just-in-time References
 
 Don't load context you'll never use. References are lightweight pointers that load only when they could plausibly fit the budget — Anthropic's "JIT" pattern, built in.
 
@@ -323,7 +507,7 @@ pack.add_reference(name="profile", location="https://api.example.com/me", loader
 compiled = await pack.acompile()   # async references resolved concurrently
 ```
 
-## Eval / assert layer — "pytest for prompts"
+### Eval / assert layer — "pytest for prompts"
 
 ```python
 from ctxbudgeter.testing import (
@@ -354,7 +538,7 @@ Refresh goldens after intentional changes:
 pytest --ctxbudgeter-update-golden
 ```
 
-## Cache-aware adapters
+### Cache-aware adapters
 
 ```python
 from ctxbudgeter.adapters import (
@@ -384,7 +568,7 @@ deps = to_pydantic_ai_deps(compiled)
 agent.run(deps["system_prompt"], message_history=deps["message_history"])
 ```
 
-## Multi-modal attachments
+### Multi-modal attachments
 
 ```python
 from ctxbudgeter import ContextPack, ImageBlock, StructuredBlock
@@ -412,7 +596,7 @@ pack.add(
 
 Image and structured blocks flow through to OpenAI's `image_url` / Anthropic's `image` / `tool_result` formats automatically.
 
-## Sensitivity enforcement
+### Sensitivity enforcement
 
 ```python
 pack.add(name="api_key", content="sk-DEADBEEF...", sensitivity="secret")
@@ -425,7 +609,7 @@ pack.set_secret_policy("allow")    # silently allow (escape hatch)
 
 In CI you almost always want `refuse` or `redact`. The text/markdown reports flag `[!secret]` items so reviewers can catch leaks during PR review.
 
-## Memory (Write strategy) + Isolation (Isolate strategy)
+### Memory (Write strategy) + Isolation (Isolate strategy)
 
 ```python
 from ctxbudgeter import ContextPack, InMemoryStore, JSONMemoryStore, MemoryNote
@@ -446,7 +630,7 @@ frontend_pack = pack.subset_by_kind("project_doc", "code").fork(
 )
 ```
 
-## Declarative YAML pack specs
+### Declarative YAML pack specs
 
 Check your pack into git like any other config:
 
@@ -495,7 +679,43 @@ pack = load_pack("pack.yaml")
 compiled = pack.compile()
 ```
 
-## CLI
+## Supported tools and libraries
+
+| Category | Supported | How |
+|---|---|---|
+| **LLM providers** | OpenAI, Anthropic | request adapters (`to_openai_request`, `to_anthropic_request`), `ContextHarness`, `openai_tools()` / `anthropic_tools()`, `openai_complete` / `anthropic_complete` |
+| | any other model (Gemini, Mistral, Llama, local models…) | `LLMContextAgent(complete=your_fn)`, `ContextToolDispatcher`, `rt.to_messages()` — the runtime is provider-neutral |
+| **Agent frameworks** | LangChain, LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI | compile-time adapters (`to_langchain_messages`, `to_langgraph_state`, `to_crewai_context`, `to_openai_agents_input`, `to_pydantic_ai_deps`); bind `openai_tools()` to the framework's tool calling for the runtime |
+| | Microsoft Agent Framework, custom loops | `ContextHarness` or `ContextRuntime` directly |
+| **Agent clients** | Claude Code, Claude Desktop, Cursor, any MCP client | `ctxbudgeter serve-mcp`; the skill via `ctxbudgeter skill export` |
+| **Protocols** | Model Context Protocol | stdio MCP server (no SDK needed); MCP tool-schema audit, selection and maps |
+| **Skills** | Claude Code skills, any SKILL.md loader | `src/ctxbudgeter/skills/context-management/` |
+| **Tokenizers** | tiktoken (o200k, cl100k), built-in heuristic | `TokenCounter(model)`; automatic fallback |
+| **Inference engines** | prefix caching (vLLM, SGLang), suffix KV reuse | `PrefillCostModel` and the cache-aware planner price every edit |
+| **Fine-tuning / RL** | OpenAI chat fine-tuning format, TRL-style DPO, reward JSONL | `ctxbudgeter train-export` |
+| **Testing and CI** | pytest (plugin + golden snapshots), GitHub Actions, pre-commit | `ctxbudgeter.testing`, `eval` / `diff` gates |
+| **Storage** | in-memory, JSON files, your own backend | `MemoryStore`, `ArchiveStore`, `TraceLog`, `PolicyStore`, `AutonomyRegistry` |
+| **Python** | 3.10, 3.11, 3.12, 3.13, 3.14 on Linux, macOS, Windows | CI matrix |
+
+## CLI reference
+
+| Group | Command | What it does |
+|---|---|---|
+| Compile | `scan` | walk a directory, count tokens, emit a starter `pack.yaml` |
+| | `compile` | ad-hoc compile from a directory + task, with optional policy, BOM, snapshot |
+| | `pack` / `validate` | compile or validate a declarative spec |
+| | `report` | re-render a saved compiled pack |
+| Audit & govern | `scan-risk` | local PII / secret scan with masked previews |
+| | `bom` / `diff` / `eval` | Context Bill of Materials, BOM diffs, eval-suite CI gates |
+| Optimize & visualize | `cache-plan` / `viz` / `viz-diff` | prompt-cache layout, Context MRI, visual diffs |
+| MCP tool budgeting | `mcp-audit` / `mcp-select` / `mcp-viz` | audit, select and map MCP tool schemas |
+| **Adaptive Context Engine** | `bench` | CTXBench across harness / unrestricted / guided / adaptive |
+| | `profile` | behaviour profiles + tuned policies from decision traces |
+| | `autonomy certify` / `autonomy show` | promote, hold or demote context autonomy; audit history |
+| | `train-export` | SFT, DPO and reward datasets |
+| | `skill export` / `skill show` | install or render the context-management skill |
+| | `serve-mcp` | the governed context API as an MCP server |
+| | `context-tools` | tool definitions for OpenAI, Anthropic or MCP |
 
 ```bash
 # Scan a directory, suggest priorities + cache policies
@@ -554,34 +774,23 @@ ctxbudgeter mcp-select tools.json --task "refund a customer" --budget 2000
 ctxbudgeter mcp-viz tools.json --out mcp_map.html
 ```
 
-### Adaptive Context Engine (0.4)
+### Adaptive Context Engine
 
 ```bash
-# Benchmark context management: harness vs unrestricted vs guided vs adaptive
 ctxbudgeter bench -a competent --budgets 4000,8000 --tasks 2 -o report.json --traces traces.jsonl
-
-# Profile behaviour from traces, propose (and store) an adaptive policy per model
 ctxbudgeter profile traces.jsonl --store .ctxbudgeter/policies
-
-# Certify context autonomy from benchmark evidence; show the audit history
 ctxbudgeter autonomy certify report.json --registry .ctxbudgeter/autonomy.json
 ctxbudgeter autonomy show competent bench-model
-
-# Training data from decision traces
 ctxbudgeter train-export traces.jsonl -o datasets/
-
-# The portable context-management skill
 ctxbudgeter skill export ~/.claude/skills
 ctxbudgeter skill show --brief --model claude-opus-5.5
-
-# Context tools for function calling, or the MCP server
 ctxbudgeter context-tools --provider anthropic
 ctxbudgeter serve-mcp --budget 128000 --state .ctx/session.json --allow-add
 ```
 
-Every command takes `--format json` where a machine-readable payload makes sense, and
-writes it to **stdout only** — advisory notes go to stderr, so `ctxbudgeter bom pack.json
--f json | jq .` is safe to pipe.
+Every command takes `--format json` where a machine-readable payload makes sense, and writes it
+to **stdout only** — advisory notes go to stderr, so `ctxbudgeter bom pack.json -f json | jq .`
+is safe to pipe.
 
 ## Wire it into CI
 
@@ -644,6 +853,16 @@ def test_production_pack_quality():
 
 ## How it works
 
+### Runtime: one governed edit
+
+1. The agent calls `context_compact(start, end, summary)` (or the Python method).
+2. The runtime builds an `EditProposal` with the targets, usage, phase, pins and recent tags.
+3. The `EditGovernor` checks it against the `ContextEditPolicy` and the timing rubric, measures
+   the summary's fact retention, redacts any secret, and adds a provenance footer.
+4. The autonomy level decides: refuse (L0), recommend (L1), queue (L2), apply (L3/L4).
+5. On apply: an automatic checkpoint, originals archived, the summary inserted with a range tag.
+6. A `DecisionTrace` is written, and later annotated if the archive is reopened.
+
 ### Compiler algorithm
 
 1. Resolve `Reference`s — load only those whose estimated cost could fit. Loader failures → excluded with reason.
@@ -691,7 +910,7 @@ compiled = await pack.acompile()   # async path; sync compressors also work with
 
 If your compressor returns content larger than `target_tokens`, the compiler retries once with a tighter target before giving up.
 
-## Round-trip + tooling
+### Round-trip + tooling
 
 ```python
 import json
@@ -706,30 +925,57 @@ restored = compiled_pack_from_dict(json.loads(Path("compiled.json").read_text())
 print(restored.report("markdown"))
 ```
 
+## Research foundations
+
+| Work | What ctxbudgeter takes from it |
+|---|---|
+| NVIDIA, [*Letting Models Manage Their Own Context: Where We Stand*](https://arxiv.org/abs/2611.34147) (2026) | model-driven vs harness-driven compaction, the NOOA-style collapse/recall API, context anxiety, per-model behaviour priors, suffix KV reuse |
+| Apple, [*Self-Compacting Language Model Agents*](https://arxiv.org/abs/2606.23525) (2026) | the compaction timing rubric (compact at boundaries, not mid-derivation) |
+| UW / Meta, [*Context Language Models*](https://arxiv.org/abs/2609.37725) (2026) | editable context and suffix cache reuse |
+| Microsoft, [*MEMENTO*](https://arxiv.org/abs/2604.09852) (2026) | training models to fold their own context — the motivation for `ctxbudgeter.train` |
+
 ## Positioning
 
 Most agent frameworks ask: *"which agent runs next?"*
-ctxbudgeter asks: *"what exact information should this agent see right now — and why?"*
+ctxbudgeter asks: *"what exact information should this agent see right now — who decides,
+and can we prove the decision was good?"*
 
-| Layer            | Existing                                  | What ctxbudgeter adds                              |
-| ---------------- | ----------------------------------------- | -------------------------------------------------- |
-| Agent frameworks | LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI | Decides the **context shape** before the call |
-| RAG              | LlamaIndex, LangChain retrievers          | Retrieval ≠ final context; ctxbudgeter is the gate |
-| Observability    | LangSmith, AgentOps                       | They show what happened *after*; we prevent *before* |
-| Context tools    | ctxforge, contextkit, contextagent        | We're the **assertable** + **deterministic** option  |
-| Agent harnesses  | Harness-driven compaction (summarize at a threshold) | Agent-driven context edits under **governance**, with autonomy earned on benchmarks |
-| Model behaviour  | One prompt for every model                | **Per-model** profiles and validated policies (avoidant, anxious, over-compressing, …) |
+| Layer | Existing | What ctxbudgeter adds |
+|---|---|---|
+| Agent frameworks | LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI | decides the **context shape** before the call |
+| Agent harnesses | harness-driven compaction (summarize at a threshold) | agent-driven context edits under **governance**, autonomy earned on benchmarks |
+| RAG | LlamaIndex, LangChain retrievers | retrieval ≠ final context; ctxbudgeter is the gate |
+| Observability | LangSmith, AgentOps | they show what happened *after*; ctxbudgeter governs *before* and *during* |
+| Model behaviour | one prompt for every model | **per-model** profiles and validated policies |
+| Context tools | ctxforge, contextkit, contextagent | the **assertable**, **deterministic** and **benchmarked** option |
 
 ## Design choices
 
-- **Local-first.** No LLM API calls in the core. The compiler is pure Python.
-- **Deterministic.** Same inputs → identical compiled pack. Same JSON output. Same health score. Always.
-- **Explainable.** Every input item shows up in `decisions` with a status and a human-readable reason.
-- **Framework-agnostic.** Core has zero hard dependencies on agent SDKs. Adapters are lazy-imported.
-- **Composable.** Bring your own tokenizer, your own compressor, your own scoring weights, your own loaders, your own memory store.
+- **Local-first.** No LLM API calls in the core. The compiler, runtime and governor are pure Python.
+- **Deterministic.** Same inputs → identical compiled pack, plan, verdict and benchmark score.
+- **Explainable.** Every item has a decision with a reason; every edit has a trace with violations and notes.
+- **Governed, not trusted.** Agents propose context edits; a deterministic governor decides. Originals are archived, never silently deleted.
+- **Evidence over assumptions.** Tuned policies are validated on held-out tasks before they become active; a policy transferred to a new model starts unvalidated.
+- **Framework-agnostic.** No hard dependency on agent SDKs. Adapters are lazy-imported.
+- **Composable.** Bring your own tokenizer, compressor, summarizer, scoring weights, loaders, memory, archive and approver.
 - **Assertable.** Quality gates live in `pytest`, not in your head.
-- **Governed, not trusted (0.4).** Agents propose context edits; a deterministic governor decides. Originals are archived, never silently deleted, and every decision is traced.
-- **Evidence over assumptions (0.4).** Tuned policies are validated on held-out tasks before they become active; a policy transferred to a new model starts unvalidated.
+
+## Documentation
+
+| Doc | Covers |
+|---|---|
+| [Adaptive Context Engine](docs/context_intelligence.md) | architecture, every 0.4 module, integration, limitations |
+| [CTXBench results](docs/ctxbench/README.md) | reference results, how to read and reproduce them |
+| [Context-management skill](src/ctxbudgeter/skills/context-management/SKILL.md) | the skill, its [API reference](src/ctxbudgeter/skills/context-management/references/api.md) and [examples](src/ctxbudgeter/skills/context-management/references/examples.md) |
+| [ContextOps](docs/contextops.md) | policy, scanner, provenance, BOM, diff, cache planning, evals |
+| [Context BOM](docs/context_bom.md) · [Context MRI](docs/context_mri.md) · [MCP budgeting](docs/mcp_tool_budgeting.md) · [Security](docs/security.md) | deep dives |
+| [Examples](examples/) | runnable demos for the runtime, CTXBench, BOM, MRI, diffs, policies and adapters |
+| [Changelog](CHANGELOG.md) | every release |
+
+## Contributing
+
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). The suite runs
+with `pip install -e ".[dev,all]" && pytest -q`; lint with `ruff check src tests`.
 
 ## Author
 

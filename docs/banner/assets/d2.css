@@ -1,0 +1,129 @@
+/* K28 D2 v1.0.0 (LOCKED 2026-11-12) — "widget OS" presentation style, built from the user's 12 references:
+   rounded widget cards, outlined + filled pill tags, tumbling pills, activity rows with value pills + arrows, ring gauges,
+   dot-matrix progress, segmented URL blocks, icon-square tag stacks, rotated stickers, pastel dashboards, a dark timeline
+   with colour blocks, line-art spec-sheet windows over photos. Grotesk (Inter Tight) + mono labels (IBM Plex Mono). */
+@font-face{font-family:'Grot';font-weight:200;src:url('fonts/inter-tight-latin-200-normal.woff2') format('woff2')}
+@font-face{font-family:'Grot';font-weight:300;src:url('fonts/inter-tight-latin-300-normal.woff2') format('woff2')}
+@font-face{font-family:'Grot';font-weight:400;src:url('fonts/inter-tight-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Grot';font-weight:500;src:url('fonts/inter-tight-latin-500-normal.woff2') format('woff2')}
+@font-face{font-family:'Grot';font-weight:600;src:url('fonts/inter-tight-latin-600-normal.woff2') format('woff2')}
+@font-face{font-family:'PMono';font-weight:400;src:url('fonts/ibm-plex-mono-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'PMono';font-weight:500;src:url('fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2')}
+
+:root{
+  /* stages */
+  --night:#0E0E0E; --night2:#111111; --win:#2B2B2B; --card:#1C1C1C; --card2:#232323; --card3:#262626; --rule:#333333;
+  --paper:#F2F2F0; --paper2:#E9E9E6; --white:#FFFFFF; --sky-bg:#66B9F5; --ice-bg:#C9E7FB; --teal-bg:#A9D6D8; --grey-bg:#C9CBCF;
+  /* ink */
+  --t1:#F5F5F2; --t2:#C8C8C4; --t3:#9A9A96; --t4:#6A6A66; --ink:#111111; --ink2:#5A5A58;
+  /* accents (reference swatches) */
+  --coral:#F2643F; --rust:#C2531F; --olive:#5B6B35; --lav:#9B83D4; --violet:#C77DFF; --sky:#7EB6C8; --blue:#4C9DF2; --ice:#D6EEFD;
+  --lime:#C9E35B; --lime2:#C5D93B; --mint:#BFF1D9; --green:#58B86A; --teal:#A6D7D6; --yellow:#F6D24A; --red:#E23A2B; --pink:#F2A6D9;
+  --cream:#F3EFE6; --cobalt:#1F4FD8;
+  --grot:'Grot',Arial,sans-serif; --mono:'PMono',monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+.scene{font-family:var(--grot);color:var(--t1);-webkit-font-smoothing:antialiased;letter-spacing:-0.01em}
+.scene *{font-synthesis:none}
+.a{position:absolute}
+.mono{font-family:var(--mono);font-weight:400;letter-spacing:.12em;text-transform:uppercase}
+.mono.lc{text-transform:none;letter-spacing:.02em}
+.g4{font-weight:400}.g5{font-weight:500}.g6{font-weight:600}
+
+/* type scale (1920 canvas): 20 mono · 24 · 28 · 36 · 48 · 64 · 96 · 128 · 160 */
+.t20{font-size:20px;line-height:1.3}.t24{font-size:24px;line-height:1.3}.t28{font-size:28px;line-height:1.3}
+.t36{font-size:36px;line-height:1.2}.t48{font-size:48px;line-height:1.1}.t64{font-size:64px;line-height:1.05;letter-spacing:-.025em}
+.t96{font-size:96px;line-height:1;letter-spacing:-.035em}.t128{font-size:128px;line-height:.98;letter-spacing:-.04em}
+.t160{font-size:160px;line-height:.95;letter-spacing:-.045em}
+.nw{white-space:nowrap}
+.c1{color:var(--t1)}.c2{color:var(--t2)}.c3{color:var(--t3)}.c4{color:var(--t4)}.ci{color:var(--ink)}.ci2{color:var(--ink2)}
+
+/* widget cards */
+.card{position:absolute;background:var(--card);border-radius:40px}
+.card.r28{border-radius:28px}.card.r24{border-radius:24px}.card.r16{border-radius:16px}
+.card.d2{background:var(--card2)}.card.d3{background:var(--card3)}.card.white{background:var(--white);color:var(--ink)}
+.card.paper{background:var(--paper);color:var(--ink)}
+.card.black{background:#0B0B0B}
+.card.shadow{box-shadow:0 30px 80px rgba(0,0,0,.35)}
+/* spec-sheet window (UN.01 reference): frame + inner panel + title bar */
+.win{position:absolute;background:var(--win);border-radius:28px;border:1px solid #3A3A3A;box-shadow:0 40px 120px rgba(0,0,0,.55)}
+.win .bar{position:absolute;left:22px;top:12px;font-size:20px;color:#D8D8D4;display:flex;align-items:center;gap:10px}
+.win .bar i{width:18px;height:18px;border-radius:50%;background:#D8D8D4;display:block}
+.win .in{position:absolute;left:14px;top:46px;right:14px;bottom:14px;background:#1F1F1F;border-radius:18px}
+.tile{position:absolute;background:#262626;border-radius:14px}
+.lbl{position:absolute;font-size:20px;color:#E8E8E4;display:flex;align-items:center;gap:10px;white-space:nowrap}
+.lbl::before{content:"";width:14px;height:14px;border-radius:50%;background:#E8E8E4}
+
+/* pills */
+.pill{position:absolute;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;white-space:nowrap;font-weight:400}
+.pill.out{border:2px solid var(--t1);color:var(--t1)}
+.pill.outk{border:2px solid var(--ink);color:var(--ink)}
+.pill.fill{color:var(--ink)}
+.pill.sm{height:56px;padding:0 26px;font-size:28px}
+.pill.md{height:84px;padding:0 40px;font-size:40px}
+.pill.lg{height:120px;padding:0 56px;font-size:60px}
+.pill.xl{height:180px;padding:0 80px;font-size:96px;letter-spacing:-.03em}
+.vpill{display:inline-flex;align-items:center;justify-content:center;height:68px;min-width:132px;padding:0 22px;border-radius:999px;
+  font-family:var(--mono);font-weight:500;font-size:28px;color:#141414;letter-spacing:0}
+.capsule{position:absolute;border-radius:999px}
+.ball{position:absolute;border-radius:50%}
+
+/* activity rows */
+.rows{position:absolute;background:var(--card2);border-radius:28px;overflow:hidden}
+.row{position:absolute;left:0;right:0;display:flex;align-items:center;gap:26px;padding:0 34px;border-top:2px solid #1A1A1A}
+.row:first-child{border-top:0}
+.arrow{font-family:var(--grot);font-weight:600}
+
+/* segmented URL blocks */
+.seg{position:absolute;border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--ink);white-space:nowrap}
+.seglbl{position:absolute;font-size:22px;color:rgba(255,255,255,.85);white-space:nowrap}
+/* icon-square tag stack */
+.tagb{position:absolute;display:flex;align-items:center;padding:0 44px;color:var(--ink);white-space:nowrap}
+.isq{position:absolute;background:#6CC0F7;display:flex;align-items:center;justify-content:center}
+.isq svg{width:46%;height:46%;stroke:#fff;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* stickers */
+.stk{position:absolute;display:flex;align-items:center;gap:16px;border-radius:18px;padding:0 26px;white-space:nowrap}
+
+/* dots progress */
+.dots{position:absolute;display:grid;gap:8px}
+.dots b{display:block;width:18px;height:18px;border-radius:50%;background:#2A2A2A}
+.dots b.on{background:var(--lime2)}
+
+/* timeline */
+.tl-rail{position:absolute;width:6px;background:#3A3A3A;border-radius:3px}
+.tl-blk{position:absolute;border-radius:14px;display:flex;align-items:flex-start;justify-content:center;padding-top:16px}
+.tl-card{position:absolute;background:#2C2C2E;border-radius:18px}
+.nowline{position:absolute;height:2px;background:#FF375F}
+
+/* code card */
+.code{position:absolute;background:#0B0B0B;border-radius:28px;font-family:var(--mono);font-size:24px;line-height:1.55;color:#D8D8D4;white-space:pre;overflow:hidden}
+.code .k{color:#C77DFF}.code .s{color:#C9E35B}.code .c{color:#6A6A66}.code .h{color:#7EB6C8}
+
+/* toggles + sliders + segmented control */
+.toggle{position:absolute;border-radius:999px;background:#F2F2F0}
+.toggle .knob{position:absolute;top:8px;border-radius:999px;background:#0E0E0E;display:flex;align-items:center;justify-content:center;color:#fff}
+.slider{position:absolute;height:12px;border-radius:6px;background:#2E2E2E}
+.slider .fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;transform-origin:0 50%}
+.slider .knob{position:absolute;top:-14px;width:40px;height:40px;border-radius:50%;background:#F5F5F2}
+
+/* ---- technical-manual elements (S7 module sheet + OP-1 user guide references) ---- */
+.g2{font-weight:200}.g3{font-weight:300}
+.t240{font-size:240px;line-height:.86;letter-spacing:-.05em}
+.spec h4{font-family:var(--grot);font-weight:500;font-size:28px;letter-spacing:.01em;text-transform:uppercase;color:var(--t1);margin-bottom:10px}
+.spec p{font-size:22px;line-height:1.3;color:var(--t2)}
+.manual{color:#F1F1EE}
+.manual .bul::before{content:"●";margin-right:10px;font-size:18px;vertical-align:2px}
+.navbox{position:absolute;border:1.5px solid #EDEDEA;border-radius:4px}
+
+/* ---- frame roots (v1.0.0 lock): lets D2 frames live on a static page (stills, decks) as well as in .scene films ---- */
+.d2{position:relative;overflow:hidden;font-family:var(--grot);color:var(--t1);-webkit-font-smoothing:antialiased;letter-spacing:-0.01em;background:var(--night)}
+.d2 *{font-synthesis:none}
+.d2 .a{position:absolute}
+.d2.slide{width:1920px;height:1080px}
+.d2.frame{width:1080px;height:1440px}
+.d2.tall{width:1080px;height:1920px}
+.d2.square{width:1080px;height:1080px}
+body:not(.one) .d2{margin:0 auto 40px}
+body.one .d2{display:none !important}
+body.one .d2.on{display:block !important;margin:0}
