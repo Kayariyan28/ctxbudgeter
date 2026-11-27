@@ -14,21 +14,29 @@
 
 > **ctxbudgeter helps AI agents know what to know.**
 
-ctxbudgeter is a **ContextOps toolkit for production AI agents**. It compiles, audits,
-governs, visualizes, and optimizes LLM context *before every model call* — so your
-agents control token budgets, reduce context waste, detect risky context, preserve
-provenance, improve prompt-cache layout, and produce auditable Context Bills of Materials.
+ctxbudgeter is a **model-agnostic context intelligence layer for production AI agents**.
+It compiles, audits, governs, visualizes, and optimizes LLM context *before every model
+call* — so your agents control token budgets, reduce context waste, detect risky context,
+preserve provenance, improve prompt-cache layout, and produce auditable Context Bills of
+Materials.
 
-**ctxbudgeter is not an agent framework. It works *before* the model call.**
-It sits in front of LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI, Microsoft Agent
-Framework, or your own loop.
+**New in 0.4:** it also governs context *while the agent runs*. Agents get a context API
+to compact, pin, archive and recall their own history; ctxbudgeter checks every edit,
+grants autonomy as agents earn it, benchmarks how well they manage context
+(CTXBench), and learns per-model policies from their behaviour.
+[Jump to the Adaptive Context Engine →](#new-in-04--the-adaptive-context-engine)
+
+**ctxbudgeter is not an agent framework.** It sits in front of — and, with 0.4, alongside —
+LangGraph, CrewAI, OpenAI Agents SDK, PydanticAI, Microsoft Agent Framework, or your own
+loop.
 
 > Agent observability tools show what the agent *did*. ctxbudgeter shows what the agent
 > was *allowed to know* before it acted.
 
 ```text
 ContextOps · token budgets · policy governance · PII/secret scanning ·
-Context Bill of Materials · context diffing · Context MRI · MCP tool budgeting
+Context Bill of Materials · context diffing · Context MRI · MCP tool budgeting ·
+governed context runtime · graduated autonomy · context skill · CTXBench · MCP server
 ```
 
 ## See it work
@@ -89,7 +97,9 @@ New in **0.3 (ContextOps)**: `ContextPolicy`, `ContextScanner`, `ContextProvenan
 **Context MRI** visualization. See [`docs/contextops.md`](docs/contextops.md). Fully
 backward compatible with the 0.2 API. Deep-dive docs: [BOM](docs/context_bom.md) ·
 [Context MRI](docs/context_mri.md) · [MCP budgeting](docs/mcp_tool_budgeting.md) ·
-[security](docs/security.md).
+[security](docs/security.md) · **0.4:** [Adaptive Context Engine](docs/context_intelligence.md) ·
+[CTXBench results](docs/ctxbench/README.md) ·
+[context-management skill](src/ctxbudgeter/skills/context-management/SKILL.md).
 
 ```text
 Webpack for agent context  •  pytest for prompt/context quality  •  token budget manager
@@ -707,6 +717,8 @@ ctxbudgeter asks: *"what exact information should this agent see right now — a
 | RAG              | LlamaIndex, LangChain retrievers          | Retrieval ≠ final context; ctxbudgeter is the gate |
 | Observability    | LangSmith, AgentOps                       | They show what happened *after*; we prevent *before* |
 | Context tools    | ctxforge, contextkit, contextagent        | We're the **assertable** + **deterministic** option  |
+| Agent harnesses  | Harness-driven compaction (summarize at a threshold) | Agent-driven context edits under **governance**, with autonomy earned on benchmarks |
+| Model behaviour  | One prompt for every model                | **Per-model** profiles and validated policies (avoidant, anxious, over-compressing, …) |
 
 ## Design choices
 
@@ -716,6 +728,8 @@ ctxbudgeter asks: *"what exact information should this agent see right now — a
 - **Framework-agnostic.** Core has zero hard dependencies on agent SDKs. Adapters are lazy-imported.
 - **Composable.** Bring your own tokenizer, your own compressor, your own scoring weights, your own loaders, your own memory store.
 - **Assertable.** Quality gates live in `pytest`, not in your head.
+- **Governed, not trusted (0.4).** Agents propose context edits; a deterministic governor decides. Originals are archived, never silently deleted, and every decision is traced.
+- **Evidence over assumptions (0.4).** Tuned policies are validated on held-out tasks before they become active; a policy transferred to a new model starts unvalidated.
 
 ## Author
 
