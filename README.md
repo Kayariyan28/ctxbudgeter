@@ -11,10 +11,15 @@
 [![Tests](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml/badge.svg)](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml)
 ![MCP](https://img.shields.io/badge/MCP-server-C9E35B)
 ![CTXBench](https://img.shields.io/badge/CTXBench-included-111111)
+[![Website](https://img.shields.io/badge/website-k28art.space%2Fprojectcontext-14c98b)](https://www.k28art.space/projectcontext)
 
 > **The model-agnostic context intelligence layer for AI agents.**
 > It enables, teaches, governs and evaluates how agents manage their context — before every
 > model call *and* while the agent runs.
+
+**Explore it live → [k28art.space/projectcontext](https://www.k28art.space/projectcontext)** — the two films
+(0.4 and the original), an interactive playground where you propose context edits and watch the
+governor decide, the compiler playground, CTXBench results and every module in the archive.
 
 > **If ctxbudgeter saved you tokens, time, or a 3am incident — drop a ⭐ on the [repo](https://github.com/Kayariyan28/ctxbudgeter). It's the fuel for me to keep shipping new features.**
 
@@ -964,6 +969,7 @@ and can we prove the decision was good?"*
 
 | Doc | Covers |
 |---|---|
+| [**Project page** (k28art.space/projectcontext)](https://www.k28art.space/projectcontext) | the films, the governed-edit and compiler playgrounds, CTXBench, the module archive, downloads |
 | [Adaptive Context Engine](docs/context_intelligence.md) | architecture, every 0.4 module, integration, limitations |
 | [CTXBench results](docs/ctxbench/README.md) | reference results, how to read and reproduce them |
 | [Context-management skill](src/ctxbudgeter/skills/context-management/SKILL.md) | the skill, its [API reference](src/ctxbudgeter/skills/context-management/references/api.md) and [examples](src/ctxbudgeter/skills/context-management/references/examples.md) |

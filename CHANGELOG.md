@@ -4,6 +4,19 @@ All notable changes to `ctxbudgeter` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-11-27
+
+Documentation and metadata only. No functional change: `src/` is identical to 0.4.0 apart from
+`__version__`.
+
+### Added
+
+- **Project page link** — [k28art.space/projectcontext](https://www.k28art.space/projectcontext) is
+  now the package's `Homepage` on PyPI and is linked from the top of the README and the
+  documentation table. The page carries the new 0.4 film, an interactive governed-edit playground,
+  CTXBench results and the full module archive.
+- `Documentation` on PyPI now points to the Adaptive Context Engine guide.
+
 ## [0.4.0] - 2026-11-27
 
 **The Adaptive Context Engine.** ctxbudgeter becomes a model-agnostic context

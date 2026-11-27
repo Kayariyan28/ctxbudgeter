@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ctxbudgeter"
-version = "0.4.0"
+version = "0.4.1"
 description = "Model-agnostic context intelligence for AI agents: compile, audit and govern LLM context before every call, and let agents manage their own context safely — a governed context API (compact, pin, archive, recall, rollback), graduated autonomy, a portable context-management skill, behavioural policy learning, the CTXBench benchmark, training-data export and an MCP server. Token budgets, PII/secret scanning, Context Bill of Materials, Context MRI. Framework-agnostic. Local-first. Deterministic."
 readme = "README.md"
 license = { text = "MIT" }
@@ -121,8 +121,8 @@ ctxbudgeter = "ctxbudgeter.cli:app"
 ctxbudgeter = "ctxbudgeter.pytest_plugin"
 
 [project.urls]
-Homepage = "https://github.com/Kayariyan28/ctxbudgeter"
-Documentation = "https://github.com/Kayariyan28/ctxbudgeter#readme"
+Homepage = "https://www.k28art.space/projectcontext"
+Documentation = "https://github.com/Kayariyan28/ctxbudgeter/blob/main/docs/context_intelligence.md"
 Repository = "https://github.com/Kayariyan28/ctxbudgeter"
 Issues = "https://github.com/Kayariyan28/ctxbudgeter/issues"
 Changelog = "https://github.com/Kayariyan28/ctxbudgeter/blob/main/CHANGELOG.md"
