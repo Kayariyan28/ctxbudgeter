@@ -93,7 +93,7 @@ class ContextItem(BaseModel):
         False, description="May be compressed if it doesn't fit the budget."
     )
     compressed_content: str | None = Field(
-        None, description="Optional pre-computed compressed form, used if original won't fit."
+        default=None, description="Optional pre-computed compressed form, used if original won't fit."
     )
     attachments: list[Attachment] = Field(
         default_factory=list,

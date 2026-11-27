@@ -11,6 +11,7 @@ non-compressible cost (you don't shrink an image by changing the prompt).
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Annotated, Any, Literal, Union
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -57,7 +58,7 @@ Attachment = Annotated[
 """Discriminated union of attachment block types. Use the `type` field to dispatch."""
 
 
-def attachment_estimated_tokens(att: Attachment, *, tokenizer_count: callable | None = None) -> int:
+def attachment_estimated_tokens(att: Attachment, *, tokenizer_count: Callable[[str], int] | None = None) -> int:
     """Return the budgeted token cost for a single attachment.
 
     For TextBlock: prefers the user override; otherwise asks tokenizer_count.

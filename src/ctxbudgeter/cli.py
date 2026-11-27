@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 import typer
 from rich.console import Console
@@ -16,6 +17,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from . import __version__
+from .item import CachePolicy, ContextKind
 from .pack import ContextPack
 from .report import to_json, to_markdown, to_text
 from .tokenizer import TokenCounter
@@ -115,7 +117,7 @@ def scan(
     table.add_column("Priority", justify="right")
     table.add_column("Cache")
 
-    inventory: list[dict] = []
+    inventory: list[dict[str, Any]] = []
     total = 0
     for fpath in files:
         try:
@@ -368,7 +370,7 @@ def _walk(root: Path, ignore: set[str], max_files: int) -> list[Path]:
     return out
 
 
-def _classify(path: Path) -> tuple[str, int, str]:
+def _classify(path: Path) -> tuple[ContextKind, int, CachePolicy]:
     name = path.name.lower()
     stem = path.stem.lower()
     suffix = path.suffix.lower()
@@ -396,7 +398,7 @@ def _classify(path: Path) -> tuple[str, int, str]:
 
 def _emit_pack_yaml(
     out_path: Path,
-    inventory: list[dict],
+    inventory: list[dict[str, Any]],
     root: Path,
     model: str,
     budget: int,
@@ -434,7 +436,7 @@ def _emit_pack_yaml(
     out_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-def _render_from_dict(data: dict, *, markdown: bool) -> str:
+def _render_from_dict(data: dict[str, Any], *, markdown: bool) -> str:
     decisions = data.get("decisions", [])
     included = [d for d in decisions if d["status"] in ("included", "compressed", "truncated", "redacted")]
     excluded = [d for d in decisions if d["status"] == "excluded"]
@@ -529,7 +531,7 @@ def scan_risk_cmd(
     scanner = ContextScanner()
     targets = [path] if path.is_file() else _walk(path, set(ignore), max_files)
 
-    file_results: list[dict] = []
+    file_results: list[dict[str, Any]] = []
     for f in targets:
         try:
             res = scanner.scan_file(f)

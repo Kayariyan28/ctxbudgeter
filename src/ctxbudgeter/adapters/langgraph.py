@@ -10,14 +10,16 @@ No langgraph dependency — pure dicts.
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..compiler import CompiledPack
 from .openai import CHAT_KINDS, to_openai_messages
 
 
-def to_langgraph_state(pack: CompiledPack, *, user_message: str | None = None) -> dict:
+def to_langgraph_state(pack: CompiledPack, *, user_message: str | None = None) -> dict[str, Any]:
     """Return a dict suitable for seeding LangGraph state."""
     system_parts: list[str] = []
-    context_items: dict[str, dict] = {}
+    context_items: dict[str, dict[str, Any]] = {}
     for it in pack.included_items:
         content = it.effective_content()
         context_items[it.name] = {

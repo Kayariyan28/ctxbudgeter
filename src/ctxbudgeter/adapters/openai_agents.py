@@ -7,11 +7,13 @@ dependency — pure dicts so it works whether or not ``openai-agents`` is instal
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..compiler import CompiledPack
 from .openai import CHAT_KINDS, to_openai_messages
 
 
-def to_openai_agents_input(pack: CompiledPack, *, user_message: str | None = None) -> dict:
+def to_openai_agents_input(pack: CompiledPack, *, user_message: str | None = None) -> dict[str, Any]:
     """Return ``{"instructions": str, "input": list[dict]}`` for Agents SDK runs."""
     system_parts: list[str] = []
     for it in pack.included_items:

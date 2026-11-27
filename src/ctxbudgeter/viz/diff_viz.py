@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any
 
 from ..bom import ContextBOM
 from ..diff import ContextDiff
@@ -49,7 +50,7 @@ class ContextDiffViz:
             ("Changed", len(d.changed_items), "items"),
         ])
 
-        def item_list(title: str, items: list[dict], color: str) -> str:
+        def item_list(title: str, items: list[dict[str, Any]], color: str) -> str:
             if not items:
                 return ""
             rows = "".join(

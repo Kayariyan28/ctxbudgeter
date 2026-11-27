@@ -169,7 +169,7 @@ def _add_item(pack: ContextPack, raw: dict[str, Any], base: Path) -> None:
         if not file_path.exists():
             raise SpecError(f"item '{name}': from_file '{file_path}' does not exist")
         content = file_path.read_text(encoding="utf-8")
-        source = str(file_path)
+        source: str | None = str(file_path)
     else:
         content = str(raw.get("content", ""))
         source = raw.get("source")
@@ -280,9 +280,9 @@ def dump_pack(pack: ContextPack) -> dict[str, Any]:
 # ----- parsers ---------------------------------------------------------------
 
 
-def _parse_yaml(text: str) -> dict:
+def _parse_yaml(text: str) -> dict[str, Any]:
     try:
-        import yaml  # type: ignore[import-not-found]
+        import yaml  # type: ignore[import-not-found, unused-ignore]
     except ImportError as e:
         raise SpecError(
             "YAML pack specs require PyYAML. Install with `pip install ctxbudgeter[yaml]`."
@@ -291,15 +291,15 @@ def _parse_yaml(text: str) -> dict:
     return parsed if isinstance(parsed, dict) else {}
 
 
-def _parse_toml(text: str) -> dict:
+def _parse_toml(text: str) -> dict[str, Any]:
     try:
         import tomllib  # py3.11+
-        return tomllib.loads(text)
+        return dict(tomllib.loads(text))
     except ImportError:
         pass
     try:
-        import tomli  # type: ignore[import-not-found]
-        return tomli.loads(text)
+        import tomli  # type: ignore[import-not-found, unused-ignore]
+        return dict(tomli.loads(text))
     except ImportError as e:
         raise SpecError(
             "TOML pack specs require Python 3.11+ or `tomli`. "

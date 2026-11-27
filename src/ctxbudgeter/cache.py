@@ -13,9 +13,10 @@ from __future__ import annotations
 
 import re
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from .bom import ContextBOM
     from .compiler import CompiledPack
 
 # Cache policy ordering for "stability" (lower = more stable / earlier).
@@ -42,16 +43,16 @@ class CachePlan:
     dynamic_section_tokens: int
     warnings: list[str] = field(default_factory=list)
     recommendations: list[str] = field(default_factory=list)
-    ordered_segments: list[dict] = field(default_factory=list)
+    ordered_segments: list[dict[str, Any]] = field(default_factory=list)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
 class CachePlanner:
     """Analyze a compiled context for prompt-cache friendliness."""
 
-    def analyze_bom(self, bom) -> CachePlan:
+    def analyze_bom(self, bom: ContextBOM) -> CachePlan:
         """Analyze cache layout from a ContextBOM.
 
         Works on serialized BOM items (order, cache_policy, tokens, kind) — so it

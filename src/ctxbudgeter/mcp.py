@@ -40,7 +40,7 @@ class ToolAssessment:
     risk_terms: list[str] = field(default_factory=list)
     description: str = ""
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -62,7 +62,7 @@ class MCPBudgetResult:
     token_budget: int = 0
     assessments: list[ToolAssessment] = field(default_factory=list)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
         return d
 
@@ -84,19 +84,19 @@ class MCPToolBudgeter:
 
     # ----- public API -------------------------------------------------------
 
-    def audit(self, tools: list[dict] | str | Path) -> MCPBudgetResult:
+    def audit(self, tools: list[dict[str, Any]] | str | Path) -> MCPBudgetResult:
         """Assess tools without a task (no selection) — cost, complexity, risk, overlap."""
         return self._run(self._load(tools), task=None, select=False)
 
     def select_tools(
-        self, task: str, tools: list[dict] | str | Path
+        self, task: str, tools: list[dict[str, Any]] | str | Path
     ) -> MCPBudgetResult:
         """Rank by relevance to ``task`` and select a budget-respecting subset."""
         return self._run(self._load(tools), task=task, select=True)
 
     # ----- internals --------------------------------------------------------
 
-    def _load(self, tools: list[dict] | str | Path) -> list[dict]:
+    def _load(self, tools: list[dict[str, Any]] | str | Path) -> list[dict[str, Any]]:
         if isinstance(tools, (str, Path)):
             data = json.loads(Path(tools).read_text(encoding="utf-8"))
             if isinstance(data, dict):
@@ -110,7 +110,7 @@ class MCPToolBudgeter:
             raise ValueError("MCP tools must be a list of schema dicts (or a JSON file containing one).")
         return tools_list
 
-    def _run(self, tools: list[dict], *, task: str | None, select: bool) -> MCPBudgetResult:
+    def _run(self, tools: list[dict[str, Any]], *, task: str | None, select: bool) -> MCPBudgetResult:
         task_tokens = set(_tokenize(task)) if task else set()
 
         assessments: list[ToolAssessment] = []
@@ -217,7 +217,13 @@ class MCPToolBudgeter:
         return w
 
     def _recommendations(
-        self, assessments, overlap, risky, selected, excluded, select
+        self,
+        assessments: list[ToolAssessment],
+        overlap: list[list[str]],
+        risky: list[str],
+        selected: list[str],
+        excluded: list[str],
+        select: bool,
     ) -> list[str]:
         recs: list[str] = []
         for a in assessments:

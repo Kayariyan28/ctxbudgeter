@@ -25,8 +25,8 @@ def to_pydantic_ai_deps(pack: CompiledPack) -> dict[str, Any]:
     """
     chat_kinds = {"user_message", "assistant_message", "tool_result"}
     system_parts: list[str] = []
-    history: list[dict] = []
-    deps_context: dict[str, dict] = {}
+    history: list[dict[str, Any]] = []
+    deps_context: dict[str, dict[str, Any]] = {}
 
     # Build deps_context in prompt order; system_parts in prompt order
     for it in pack.included_items:

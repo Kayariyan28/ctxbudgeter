@@ -43,7 +43,7 @@ class BOMItem:
     checksum: str | None = None
     original_tokens: int | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -57,7 +57,7 @@ class BOMExcludedItem:
     source: str | None = None
     risk_level: str = "none"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -312,13 +312,13 @@ class ContextBOM:
 # ----- helpers -----------------------------------------------------------------
 
 
-def _filter(cls: type, data: dict) -> dict:
+def _filter(cls: type, data: dict[str, Any]) -> dict[str, Any]:
     known = set(cls.__dataclass_fields__)  # type: ignore[attr-defined]
     return {k: v for k, v in data.items() if k in known}
 
 
 def _aggregate_risk(
-    scanner_findings: list[dict], policy_violations: list[dict], item_risk: dict[str, str]
+    scanner_findings: list[dict[str, Any]], policy_violations: list[dict[str, Any]], item_risk: dict[str, str]
 ) -> int:
     score = 0
     sev_w = {"low": 5, "medium": 15, "high": 30, "critical": 50}
@@ -352,7 +352,7 @@ def _build_recommendations(
     compiled: CompiledPack,
     included: list[BOMItem],
     excluded: list[BOMExcludedItem],
-    policy_violations: list[dict],
+    policy_violations: list[dict[str, Any]],
     cache_eff: int,
     item_risk: dict[str, str],
 ) -> list[str]:

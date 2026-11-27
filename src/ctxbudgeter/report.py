@@ -7,17 +7,18 @@ Markdown is for human-readable PR comments or docs. JSON is for tooling.
 from __future__ import annotations
 
 import json
+from typing import Any
 
-from .compiler import CompiledPack
+from .compiler import CompiledPack, ItemDecision
 
 
-def _included_in_prompt_order(pack: CompiledPack) -> list:
+def _included_in_prompt_order(pack: CompiledPack) -> list[Any]:
     """Return ItemDecision rows for included items, in actual prompt order."""
     by_name = {d.name: d for d in pack.decisions}
     return [by_name[it.name] for it in pack.included_items if it.name in by_name]
 
 
-def _sensitivity_tag(d) -> str:
+def _sensitivity_tag(d: ItemDecision) -> str:
     if d.sensitivity == "secret":
         return " [!secret]"
     if d.sensitivity == "public":

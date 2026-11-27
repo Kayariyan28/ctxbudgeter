@@ -11,13 +11,14 @@ import glob as _glob
 import os
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from .reference import Reference
 
-_REGISTRY: dict[str, Callable] = {}
+_REGISTRY: dict[str, Callable[..., Any]] = {}
 
 
-def register_loader(name: str, fn: Callable | None = None) -> Callable:
+def register_loader(name: str, fn: Callable[..., Any] | None = None) -> Callable[..., Any]:
     """Register a loader under a short name.
 
     Two forms:
@@ -29,14 +30,14 @@ def register_loader(name: str, fn: Callable | None = None) -> Callable:
         _REGISTRY[name] = fn
         return fn
 
-    def _wrap(actual_fn: Callable) -> Callable:
+    def _wrap(actual_fn: Callable[..., Any]) -> Callable[..., Any]:
         _REGISTRY[name] = actual_fn
         return actual_fn
 
     return _wrap
 
 
-def get_loader(name: str) -> Callable:
+def get_loader(name: str) -> Callable[..., Any]:
     if name not in _REGISTRY:
         raise KeyError(
             f"Unknown loader '{name}'. Registered: {sorted(_REGISTRY)}. "
@@ -89,7 +90,7 @@ def inline_loader(ref: Reference) -> str:
 def http_get_loader(ref: Reference) -> str:
     """HTTP GET. Requires the `requests` library at call time (not a hard dep)."""
     try:
-        import requests  # type: ignore[import-not-found]
+        import requests  # type: ignore[import-not-found, unused-ignore]
     except ImportError as e:
         raise ImportError(
             "http_get loader requires `requests`. Install with `pip install requests`."

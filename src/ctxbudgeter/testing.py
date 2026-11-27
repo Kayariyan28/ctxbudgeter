@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 from .compiler import CompiledPack
 
@@ -193,7 +194,7 @@ class GoldenPack:
         self.update = update
         self.keys = keys or self.DEFAULT_KEYS
 
-    def _summarize(self, pack: CompiledPack) -> dict:
+    def _summarize(self, pack: CompiledPack) -> dict[str, Any]:
         summary = {
             "decisions_summary": [
                 {"name": d.name, "status": d.status, "kind": d.kind, "required": d.required}
@@ -223,9 +224,9 @@ class GoldenPack:
             )
 
 
-def _shallow_diff(a: dict, b: dict) -> dict:
+def _shallow_diff(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     """Return only the keys that differ between two dicts (shallow)."""
-    diff: dict = {}
+    diff: dict[str, Any] = {}
     keys = set(a) | set(b)
     for k in sorted(keys):
         if a.get(k) != b.get(k):

@@ -21,7 +21,7 @@ class ItemChange:
     name: str
     field_changes: dict[str, dict[str, Any]] = field(default_factory=dict)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {"name": self.name, "field_changes": self.field_changes}
 
 
@@ -45,8 +45,8 @@ class ContextDiff:
     @classmethod
     def compare(
         cls,
-        old: ContextBOM | dict | str | Path,
-        new: ContextBOM | dict | str | Path,
+        old: ContextBOM | dict[str, Any] | str | Path,
+        new: ContextBOM | dict[str, Any] | str | Path,
     ) -> ContextDiff:
         old_bom = _coerce(old)
         new_bom = _coerce(new)
@@ -140,7 +140,7 @@ class ContextDiff:
         return "\n".join(lines)
 
 
-def _coerce(obj: ContextBOM | dict | str | Path) -> ContextBOM:
+def _coerce(obj: ContextBOM | dict[str, Any] | str | Path) -> ContextBOM:
     if isinstance(obj, ContextBOM):
         return obj
     if isinstance(obj, dict):

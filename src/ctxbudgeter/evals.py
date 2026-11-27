@@ -27,7 +27,7 @@ class EvalCheck:
     passed: bool
     detail: str
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -43,7 +43,7 @@ class EvalResult:
     def failures(self) -> list[EvalCheck]:
         return [c for c in self.checks if not c.passed]
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "name": self.name,
             "passed": self.passed,
@@ -138,7 +138,7 @@ class ContextEval:
                 name="block_secrets",
                 passed=not live,
                 detail="no unredacted secrets" if not live
-                else f"unredacted secrets in: {sorted({f.get('item_name') for f in live})}",
+                else f"unredacted secrets in: {sorted({str(f.get('item_name')) for f in live})}",
             ))
 
         if self.block_pii:
@@ -150,7 +150,7 @@ class ContextEval:
                 name="block_pii",
                 passed=not live,
                 detail="no unredacted PII" if not live
-                else f"unredacted PII in: {sorted({f.get('item_name') for f in live})}",
+                else f"unredacted PII in: {sorted({str(f.get('item_name')) for f in live})}",
             ))
 
         if self.must_not_contain:
@@ -201,7 +201,7 @@ class EvalSuite:
         text = p.read_text(encoding="utf-8")
         if p.suffix.lower() in (".yaml", ".yml"):
             try:
-                import yaml  # type: ignore[import-not-found]
+                import yaml  # type: ignore[import-not-found, unused-ignore]
             except ImportError as e:  # pragma: no cover
                 raise ImportError(
                     "YAML eval files require PyYAML. Install with `pip install ctxbudgeter[yaml]`."
@@ -227,17 +227,17 @@ def _as_bom(target: ContextBOM | CompiledPack) -> ContextBOM:
         return target
     # Duck-type a CompiledPack.
     if hasattr(target, "included_items") and hasattr(target, "decisions"):
-        return ContextBOM.from_compiled(target)  # type: ignore[arg-type]
+        return ContextBOM.from_compiled(target)
     raise TypeError("ContextEval.run expects a ContextBOM or CompiledPack")
 
 
-def _finding_is_secret(f: dict) -> bool:
+def _finding_is_secret(f: dict[str, Any]) -> bool:
     from .scanner import _SECRET_CATEGORIES
 
     return str(f.get("category")) in _SECRET_CATEGORIES
 
 
-def _finding_is_pii(f: dict) -> bool:
+def _finding_is_pii(f: dict[str, Any]) -> bool:
     from .scanner import _PII_CATEGORIES
 
     return str(f.get("category")) in _PII_CATEGORIES

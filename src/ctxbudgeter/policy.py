@@ -26,7 +26,7 @@ class PolicyViolation:
     item_name: str | None = None
     action: str = "flag"  # "flag" | "exclude" | "redact" | "block"
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -132,7 +132,7 @@ class ContextPolicy:
         text = p.read_text(encoding="utf-8")
         if p.suffix.lower() in (".yaml", ".yml"):
             try:
-                import yaml  # type: ignore[import-not-found]
+                import yaml  # type: ignore[import-not-found, unused-ignore]
             except ImportError as e:  # pragma: no cover
                 raise ImportError(
                     "YAML policy files require PyYAML. Install with "

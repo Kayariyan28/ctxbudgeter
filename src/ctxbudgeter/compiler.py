@@ -19,7 +19,7 @@ import asyncio
 import inspect
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from typing import Literal, Union
+from typing import TYPE_CHECKING, Any, Literal, Union
 
 from .content import (
     attachment_estimated_tokens,
@@ -28,6 +28,10 @@ from .item import ContextItem
 from .reference import Reference
 from .scoring import score_item
 from .tokenizer import TokenCounter
+
+if TYPE_CHECKING:
+    from .bom import ContextBOM
+    from .cache import CachePlan
 
 DecisionStatus = Literal["included", "excluded", "compressed", "truncated", "redacted"]
 SecretPolicy = Literal["allow", "warn", "refuse", "redact"]
@@ -112,9 +116,9 @@ class CompiledPack:
 
     # --- ContextOps governance metadata (populated when a policy/scan is applied) ---
     task: str | None = None
-    policy_summary: dict | None = None
-    policy_violations: list[dict] = field(default_factory=list)
-    scanner_findings: list[dict] = field(default_factory=list)
+    policy_summary: dict[str, Any] | None = None
+    policy_violations: list[dict[str, Any]] = field(default_factory=list)
+    scanner_findings: list[dict[str, Any]] = field(default_factory=list)
     item_risk: dict[str, str] = field(default_factory=dict)
 
     @property
@@ -160,7 +164,7 @@ class CompiledPack:
         return _report.to_text(self)
 
     @property
-    def bom(self):
+    def bom(self) -> ContextBOM:
         """Build a Context Bill of Materials from this compiled pack.
 
         Returns a ``ctxbudgeter.bom.ContextBOM``. Pulls policy summary, violations,
@@ -170,7 +174,7 @@ class CompiledPack:
 
         return ContextBOM.from_compiled(self)
 
-    def cache_plan(self):
+    def cache_plan(self) -> CachePlan:
         """Analyze cache layout. Returns a ``ctxbudgeter.cache.CachePlan``."""
         from .cache import CachePlanner
 
@@ -178,42 +182,42 @@ class CompiledPack:
 
     # ----- framework adapters (thin instance methods over the adapter functions) ---
 
-    def to_openai_messages(self, **kwargs) -> list[dict]:
+    def to_openai_messages(self, **kwargs: Any) -> list[dict[str, Any]]:
         from .adapters.openai import to_openai_messages
 
         return to_openai_messages(self, **kwargs)
 
-    def to_anthropic_messages(self, **kwargs) -> dict:
+    def to_anthropic_messages(self, **kwargs: Any) -> dict[str, Any]:
         from .adapters.anthropic import to_anthropic_messages
 
         return to_anthropic_messages(self, **kwargs)
 
-    def to_langchain_messages(self, **kwargs):
+    def to_langchain_messages(self, **kwargs: Any) -> list[Any]:
         from .adapters.langchain import to_langchain_messages
 
         return to_langchain_messages(self, **kwargs)
 
-    def to_openai_agents_input(self, **kwargs) -> dict:
+    def to_openai_agents_input(self, **kwargs: Any) -> dict[str, Any]:
         from .adapters.openai_agents import to_openai_agents_input
 
         return to_openai_agents_input(self, **kwargs)
 
-    def to_langgraph_state(self, **kwargs) -> dict:
+    def to_langgraph_state(self, **kwargs: Any) -> dict[str, Any]:
         from .adapters.langgraph import to_langgraph_state
 
         return to_langgraph_state(self, **kwargs)
 
-    def to_pydantic_ai_context(self, **kwargs) -> dict:
+    def to_pydantic_ai_context(self, **kwargs: Any) -> dict[str, Any]:
         from .adapters.pydantic_ai import to_pydantic_ai_deps
 
         return to_pydantic_ai_deps(self, **kwargs)
 
-    def to_crewai_context(self, **kwargs) -> dict:
+    def to_crewai_context(self, **kwargs: Any) -> dict[str, Any]:
         from .adapters.crewai import to_crewai_context
 
         return to_crewai_context(self, **kwargs)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "model": self.model,
             "token_budget": self.token_budget,
@@ -324,7 +328,9 @@ def _try_compress_sync(
                 f"compressor for '{item.name}' returned a coroutine — use pack.acompile() for async compressors"
             )
             try:
-                text.close()  # type: ignore[union-attr]
+                close = getattr(text, "close", None)
+                if callable(close):
+                    close()
             except Exception:
                 pass
             return None
@@ -509,7 +515,7 @@ async def _resolve_references_async(
     # Sort to prioritize required, then by priority
     sorted_refs = sorted(references, key=lambda r: (not r.required, -r.priority, r.name))
 
-    tasks: list[tuple[Reference, asyncio.Task]] = []
+    tasks: list[tuple[Reference, asyncio.Future[str]]] = []
     sync_results: list[tuple[Reference, str]] = []
     sync_failures: list[tuple[Reference, str]] = []
     skipped_by_estimate: list[Reference] = []
@@ -530,7 +536,7 @@ async def _resolve_references_async(
             sync_failures.append((ref, f"{type(e).__name__}: {e}"))
             continue
         if inspect.isawaitable(result):
-            tasks.append((ref, asyncio.create_task(result)))
+            tasks.append((ref, asyncio.ensure_future(result)))
         elif isinstance(result, str):
             sync_results.append((ref, result))
             rough_budget_used += est or counter.count(result)
@@ -699,7 +705,7 @@ def _process_required(
     counter: TokenCounter,
     config: CompilerConfig,
     *,
-    async_compress: Callable | None = None,
+    async_compress: Callable[..., Any] | None = None,
 ) -> None:
     """Process required items with compress/truncate fallbacks. Mutates state."""
     for item in items:
@@ -812,7 +818,9 @@ def _process_optional(
             )
             continue
         # Exclude with a human-readable reason
-        kind_key = "excluded_size_high_pri" if item.priority >= 80 else "excluded_size"
+        kind_key: Literal["excluded_size_high_pri", "excluded_size"] = (
+            "excluded_size_high_pri" if item.priority >= 80 else "excluded_size"
+        )
         state.decisions.append(
             ItemDecision(
                 name=item.name, status="excluded",
@@ -1190,7 +1198,9 @@ async def _acompile_resolved(
                 )
             )
             continue
-        kind_key = "excluded_size_high_pri" if item.priority >= 80 else "excluded_size"
+        kind_key: Literal["excluded_size_high_pri", "excluded_size"] = (
+            "excluded_size_high_pri" if item.priority >= 80 else "excluded_size"
+        )
         state.decisions.append(
             ItemDecision(
                 name=item.name, status="excluded",
@@ -1211,7 +1221,7 @@ async def _acompile_resolved(
 # ----- from_dict round-trip ----------------------------------------------------------
 
 
-def compiled_pack_from_dict(data: dict) -> CompiledPack:
+def compiled_pack_from_dict(data: dict[str, Any]) -> CompiledPack:
     """Reconstruct a CompiledPack from `to_dict()` output.
 
     The reconstructed pack has full decisions and metadata but does NOT re-resolve
