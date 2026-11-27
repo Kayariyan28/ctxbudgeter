@@ -61,7 +61,7 @@ class TokenCounter:
         self._encoder: object | None = None
         self._using_tiktoken = False
         try:
-            import tiktoken  # type: ignore[import-not-found]
+            import tiktoken  # type: ignore[import-not-found, unused-ignore]
 
             self._encoder = tiktoken.get_encoding(_resolve_encoding(model))
             self._using_tiktoken = True

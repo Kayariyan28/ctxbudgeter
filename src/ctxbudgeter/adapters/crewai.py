@@ -9,15 +9,17 @@ No crewai dependency — pure dicts/strings.
 
 from __future__ import annotations
 
+from typing import Any
+
 from ..compiler import CompiledPack
 from .openai import CHAT_KINDS
 
 
-def to_crewai_context(pack: CompiledPack) -> dict:
+def to_crewai_context(pack: CompiledPack) -> dict[str, Any]:
     """Return ``{"context": str, "messages": list, "items": dict}`` for CrewAI."""
     parts: list[str] = []
-    messages: list[dict] = []
-    items: dict[str, dict] = {}
+    messages: list[dict[str, Any]] = []
+    items: dict[str, dict[str, Any]] = {}
 
     for it in pack.included_items:
         content = it.effective_content()

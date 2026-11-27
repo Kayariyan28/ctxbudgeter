@@ -21,7 +21,7 @@ from __future__ import annotations
 import re
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 Severity = Literal["low", "medium", "high", "critical"]
 
@@ -40,7 +40,7 @@ class Finding:
     start: int | None = None
     end: int | None = None
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return asdict(self)
 
 
@@ -64,7 +64,7 @@ class ScanResult:
         if not self.findings:
             return "none"
         worst = max(_SEVERITY_ORDER[f.severity] for f in self.findings)
-        return ("low", "medium", "high", "critical")[worst]  # type: ignore[return-value]
+        return ("low", "medium", "high", "critical")[worst]
 
     @property
     def risk_score(self) -> int:
@@ -77,7 +77,7 @@ class ScanResult:
 
     masked_text: str = ""
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "has_pii": self.has_pii,
             "has_secrets": self.has_secrets,

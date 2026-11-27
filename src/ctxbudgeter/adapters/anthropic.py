@@ -12,6 +12,7 @@ prefix from a single breakpoint.
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from ..compiler import CompiledPack
 from ..content import ImageBlock, StructuredBlock, TextBlock
@@ -20,9 +21,9 @@ CHAT_KINDS = {"user_message", "assistant_message", "tool_result"}
 MAX_CACHE_BREAKPOINTS = 4
 
 
-def _attachments_to_blocks(content: str, attachments: list) -> list[dict]:
+def _attachments_to_blocks(content: str, attachments: list[Any]) -> list[dict[str, Any]]:
     """Return a list of Anthropic content blocks for a chat message."""
-    blocks: list[dict] = []
+    blocks: list[dict[str, Any]] = []
     if content:
         blocks.append({"type": "text", "text": content})
     for a in attachments:
@@ -51,10 +52,10 @@ def to_anthropic_messages(
     pack: CompiledPack,
     *,
     user_message: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Convert a CompiledPack to Anthropic Messages API input."""
-    system_blocks: list[dict] = []
-    chat: list[dict] = []
+    system_blocks: list[dict[str, Any]] = []
+    chat: list[dict[str, Any]] = []
 
     system_items = [it for it in pack.included_items if it.kind not in CHAT_KINDS]
     last_stable_idx = -1
@@ -64,7 +65,7 @@ def to_anthropic_messages(
     for i, it in enumerate(system_items):
         content = it.effective_content()
         text = content if it.kind == "system" else f"## {it.name}\n{content}"
-        block: dict = {"type": "text", "text": text}
+        block: dict[str, Any] = {"type": "text", "text": text}
         if i == last_stable_idx and last_stable_idx >= 0:
             block["cache_control"] = {"type": "ephemeral"}
         system_blocks.append(block)
@@ -113,7 +114,7 @@ def to_anthropic_request(
     *,
     user_message: str | None = None,
     max_tokens: int | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """Return a kwargs dict for ``client.messages.create(**kwargs)``."""
     payload = to_anthropic_messages(pack, user_message=user_message)
     return {

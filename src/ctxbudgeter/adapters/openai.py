@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from typing import Any
 
 from ..compiler import CompiledPack
 from ..content import ImageBlock, StructuredBlock, TextBlock
@@ -38,12 +39,12 @@ def stable_prefix_cache_key(pack: CompiledPack) -> str | None:
     return f"ctxbudgeter-{digest[:24]}"
 
 
-def _content_for_message(content: str, attachments: list) -> object:
+def _content_for_message(content: str, attachments: list[Any]) -> object:
     """If there are attachments, return a list-of-parts OpenAI multimodal payload.
     Otherwise return the plain text string."""
     if not attachments:
         return content
-    parts: list[dict] = []
+    parts: list[dict[str, Any]] = []
     if content:
         parts.append({"type": "text", "text": content})
     for a in attachments:
@@ -63,10 +64,10 @@ def to_openai_messages(
     *,
     user_message: str | None = None,
     merge_system: bool = True,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Convert a CompiledPack to a list of OpenAI chat messages."""
     system_parts: list[str] = []
-    chat: list[dict] = []
+    chat: list[dict[str, Any]] = []
 
     for it in pack.included_items:
         if it.kind in CHAT_KINDS:
@@ -90,7 +91,7 @@ def to_openai_messages(
             tool_call_id = str(it.metadata.get("tool_call_id", it.name))
             chat.append({"role": "tool", "tool_call_id": tool_call_id, "content": content})
 
-    out: list[dict] = []
+    out: list[dict[str, Any]] = []
     if system_parts:
         if merge_system:
             out.append({"role": "system", "content": "\n\n".join(system_parts)})
@@ -109,14 +110,14 @@ def to_openai_request(
     merge_system: bool = True,
     max_completion_tokens: int | None = None,
     set_cache_key: bool = True,
-) -> dict:
+) -> dict[str, Any]:
     """Return a kwargs dict suitable for ``client.chat.completions.create(**kwargs)``.
 
     Includes `model`, `messages`, `max_completion_tokens` (default: pack.reserved_output_tokens),
     and `prompt_cache_key` (default: hash of stable prefix). Drop directly into the
     OpenAI client for explicit, cache-aware calls.
     """
-    kwargs: dict = {
+    kwargs: dict[str, Any] = {
         "model": pack.model,
         "messages": to_openai_messages(
             pack, user_message=user_message, merge_system=merge_system

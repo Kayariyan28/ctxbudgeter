@@ -16,7 +16,7 @@ import json
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from ..bom import ContextBOM
+from ..bom import BOMItem, ContextBOM
 from . import _html as H
 
 if TYPE_CHECKING:
@@ -77,7 +77,7 @@ class ContextMRI:
         Path(path).write_text(html, encoding="utf-8")
         return html
 
-    def to_data(self) -> dict:
+    def to_data(self) -> dict[str, Any]:
         """Structured MRI data (influence proxies, segments) for tooling."""
         return {
             "run_id": self.bom.run_id,
@@ -228,18 +228,21 @@ class ContextMRI:
     def _cache_boundary(self) -> str:
         items = self.bom.included_items
         # Determine the consecutive stable prefix.
-        prefix = []
+        prefix: list[BOMItem] = []
         for i in items:
             if i.cache_policy in ("stable", "semi_stable"):
                 prefix.append(i)
             else:
                 break
         dynamic = [i for i in items if i not in prefix]
-        seg = lambda lst, label, color: (  # noqa: E731
-            f'<div style="flex:{max(1, sum(i.tokens for i in lst))}">'
-            f'<div class="bar" style="background:{color};width:100%">'
-            f'{label}: {sum(i.tokens for i in lst):,}t · {len(lst)} items</div></div>'
-        )
+
+        def seg(lst: list[BOMItem], label: str, color: str) -> str:
+            return (
+                f'<div style="flex:{max(1, sum(i.tokens for i in lst))}">'
+                f'<div class="bar" style="background:{color};width:100%">'
+                f'{label}: {sum(i.tokens for i in lst):,}t · {len(lst)} items</div></div>'
+            )
+
         boundary = (
             '<div style="display:flex;gap:4px;margin:8px 0">'
             + seg(prefix, "STABLE PREFIX (cacheable)", "var(--stable)")
@@ -282,8 +285,8 @@ class ContextMRI:
                      f"<th>Why it's waste</th></tr>{rows}</table>")
         return H.panel("Context Waste Report", inner)
 
-    def _influence_scores(self) -> list[dict]:
-        out = []
+    def _influence_scores(self) -> list[dict[str, Any]]:
+        out: list[dict[str, Any]] = []
         max_tok = max((i.tokens for i in self.bom.included_items), default=1) or 1
         for i in self.bom.included_items:
             task_sim = i.relevance_score if i.relevance_score is not None else 0.5
@@ -301,7 +304,7 @@ class ContextMRI:
                 "tokens": i.tokens, "risk_level": i.risk_level,
                 "task_similarity": round(task_sim, 3), "trust": round(trust, 3),
             })
-        out.sort(key=lambda d: -d["influence_proxy"])
+        out.sort(key=lambda d: -float(d["influence_proxy"]))
         return out
 
     def _influence_map(self) -> str:

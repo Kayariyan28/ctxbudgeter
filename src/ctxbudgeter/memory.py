@@ -15,6 +15,7 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Any
 
 
 @dataclass
@@ -25,9 +26,9 @@ class MemoryNote:
     content: str
     tags: list[str] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
-    metadata: dict = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict[str, Any])
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "key": self.key,
             "content": self.content,
@@ -37,7 +38,7 @@ class MemoryNote:
         }
 
     @classmethod
-    def from_dict(cls, d: dict) -> MemoryNote:
+    def from_dict(cls, d: dict[str, Any]) -> MemoryNote:
         return cls(
             key=d["key"],
             content=d["content"],

@@ -15,7 +15,7 @@ replaces the included content itself.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from ..policy import ContextPolicy, PolicyViolation
 from ..scanner import ContextScanner
@@ -23,6 +23,7 @@ from ..tokenizer import TokenCounter
 
 if TYPE_CHECKING:
     from ..compiler import CompiledPack
+    from ..item import ContextItem
 
 
 class PolicyViolationError(ValueError):
@@ -46,10 +47,10 @@ def enforce_policy(
     counter = TokenCounter(model)
 
     violations: list[PolicyViolation] = []
-    scanner_findings: list[dict] = []
+    scanner_findings: list[dict[str, Any]] = []
     item_risk: dict[str, str] = {}
 
-    kept: list = []  # surviving included items, in order
+    kept: list[Any] = []  # surviving included items, in order
     for item in list(compiled.included_items):
         name = item.name
         excluded = False
@@ -171,7 +172,9 @@ def enforce_policy(
     return compiled
 
 
-def _set_redacted(compiled: CompiledPack, item, redacted_text: str, new_tokens: int):
+def _set_redacted(
+    compiled: CompiledPack, item: ContextItem, redacted_text: str, new_tokens: int
+) -> ContextItem:
     """Replace an item's content with redacted text and update token bookkeeping.
 
     Returns the new (redacted) item so the caller can keep it in included_items.
