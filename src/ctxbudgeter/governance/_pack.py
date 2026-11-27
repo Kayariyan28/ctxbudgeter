@@ -17,12 +17,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from .policy import ContextPolicy, PolicyViolation
-from .scanner import ContextScanner
-from .tokenizer import TokenCounter
+from ..policy import ContextPolicy, PolicyViolation
+from ..scanner import ContextScanner
+from ..tokenizer import TokenCounter
 
 if TYPE_CHECKING:
-    from .compiler import CompiledPack
+    from ..compiler import CompiledPack
 
 
 class PolicyViolationError(ValueError):

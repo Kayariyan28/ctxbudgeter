@@ -10,7 +10,7 @@
 [![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
 [![Tests](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml/badge.svg)](https://github.com/Kayariyan28/ctxbudgeter/actions/workflows/test.yml)
 
-> **If ctxbudgeter saved you tokens, time, or a 3am incident — drop a ⭐ on the [repo](https://github.com/Kayariyan28/ctxbudgeter). It's the fuel for me to keep shipping v0.3 features.**
+> **If ctxbudgeter saved you tokens, time, or a 3am incident — drop a ⭐ on the [repo](https://github.com/Kayariyan28/ctxbudgeter). It's the fuel for me to keep shipping new features.**
 
 > **ctxbudgeter helps AI agents know what to know.**
 
@@ -107,8 +107,71 @@ Webpack for agent context  •  pytest for prompt/context quality  •  token bu
 - **Isolation** (Isolate strategy) — `pack.fork()` builds a subagent-scoped pack with its own budget
 - **Async compile** — concurrent resolution of async References, async-aware compressor hook
 - **Declarative YAML/JSON specs** — check pack configuration into git, CI-friendly
-- **CLI** — 15 commands covering compile, audit, diff, eval, cache planning, visualization and MCP tool budgeting
+- **CLI** — 22 commands covering compile, audit, diff, eval, cache planning, visualization, MCP tool budgeting, and (0.4) benchmarking, profiling, training-data export, autonomy certification, the context skill and an MCP server
+- **Adaptive Context Engine (0.4)** — governed, model-driven context management: context API, edit governance, graduated autonomy, portable skill, behavioural learning, CTXBench
 - **Zero LLM calls in the core** — local-first, deterministic, fast
+
+## New in 0.4 — the Adaptive Context Engine
+
+> **The agent proposes. ctxbudgeter governs. The harness executes. The evaluator teaches.**
+
+0.4 lets agents manage their **own** context while it evolves, and makes that safe,
+measurable and learnable on any model. It builds on NVIDIA's study
+[*Letting Models Manage Their Own Context*](https://arxiv.org/abs/2611.34147): models that
+use a context API well beat harness-driven compaction, but models differ wildly. Some
+never compact, some compact far too early, some compress until they keep reopening
+archives. Full design: [`docs/context_intelligence.md`](docs/context_intelligence.md).
+
+```python
+from ctxbudgeter.runtime import ContextRuntime
+
+rt = ContextRuntime(model="gpt-6.1", budget=32_000, reserved_output_tokens=4_000)
+rt.add(SYSTEM_PROMPT, kind="system")              # protected: agents can't remove it
+rt.add("Find FY2019 receipts for ALPHA-7.", kind="task")
+rt.add(tool_output, kind="tool_result", source="corpus/treasury_2019.txt")
+rt.step()                                         # one model request (budget + KV-cost accounting)
+
+rt.budget()["timing"]      # block | defer | allow | compact_now  (SelfCompact-style rubric)
+rt.diagnose()              # duplicates, superseded/conflicting facts, stale logs, secrets
+rt.plan()                  # cache-aware edits that reach a target usage
+rt.compact("3", "17", summary="...")   # governed; originals archived, recall by tag
+rt.recall("9")             # NOOA-style: compacted originals stay recoverable
+rt.evaluate()              # compression, fact retention, reopen rate, prefill saved by suffix KV reuse
+```
+
+| Package | What it adds |
+|---|---|
+| `ctxbudgeter.runtime` | Live context API: `inspect · budget · diagnose · plan · compact · pin · archive · recall · checkpoint · rollback · evaluate`, timing rubric, cache-aware planner, prefill cost model (prefix caching vs suffix KV reuse), harness-compaction baseline, JSONL decision traces |
+| `ctxbudgeter.governance` | `EditGovernor` + `ContextEditPolicy`: protected / pinned / recent context, anti-"context-anxiety" usage floor, over-compression and fact-loss checks, secrets redacted out of summaries, provenance footers. **Graduated autonomy** L0 observe → L1 recommend → L2 supervised → L3 governed → L4 adaptive, with evidence-based certification and automatic demotion |
+| `ctxbudgeter.skills` | A portable [`context-management` SKILL.md](src/ctxbudgeter/skills/context-management/SKILL.md) (with API reference and worked examples), rendered with live thresholds, autonomy level and model-specific adaptations |
+| `ctxbudgeter.adaptive` | Behavioural learning without touching weights: profile traces → classify (avoidant, anxious, over-compressing, lossy, under-recovering, stale-keeping, unsafe) → tune → **optimize on calibration tasks** → validate → versioned `PolicyStore`. Ships priors measured in the NVIDIA paper |
+| `ctxbudgeter.bench` | **CTXBench**: seeded long-horizon tasks in 5 families, 4 modes (harness / unrestricted / guided / adaptive), **Context Intelligence Score**, plus `LLMContextAgent` for real OpenAI/Anthropic models |
+| `ctxbudgeter.train` | Decision traces → SFT, DPO preference pairs, RL reward records |
+| `ctxbudgeter.adapters` | Context tools for OpenAI / Anthropic function calling, a stdio **MCP server**, and `ContextHarness` for any agent loop |
+
+**CTXBench results** (`ctxbudgeter bench`, 20 episodes per mode: 5 families × 2 tasks × 4K/8K budgets; reproduce with [`docs/ctxbench/`](docs/ctxbench/)):
+
+| Reference agent | Harness compaction | Unrestricted API | Guided (skill) | **Adaptive (governed + learned)** |
+|---|---:|---:|---:|---:|
+| competent | 38.4 | 77.9 | 77.8 | **77.8** |
+| anxious (compacts early) | 38.4 | 82.6 | 80.3 | **80.0** |
+| avoidant (never compacts) | 38.4 | 37.5 | 37.5 | **73.3** |
+| reckless (touches protected context) | 38.4 | 0.0 · 20 critical | 0.0 · 20 critical | **76.4 · 0 critical** |
+
+Governance turns the two failure archetypes into competent context managers, and the
+optimizer leaves agents that are already good alone. In one run it rejected a tuned
+compression cap that would have stalled the anxious agent. The reference agents are
+deterministic behaviour models used for reproducible evaluation; benchmark your own model
+with `LLMContextAgent(openai_complete(...))` or `anthropic_complete(...)`.
+
+```bash
+ctxbudgeter skill export ~/.claude/skills          # install the skill for Claude Code (or any SKILL.md loader)
+ctxbudgeter bench -a avoidant -o report.json --traces traces.jsonl
+ctxbudgeter profile traces.jsonl --store .ctxbudgeter/policies
+ctxbudgeter autonomy certify report.json           # promote / hold / demote context autonomy
+ctxbudgeter train-export traces.jsonl -o datasets/ # sft.jsonl · preferences.jsonl · rewards.jsonl
+ctxbudgeter serve-mcp --state .ctx/session.json    # governed context API over MCP
+```
 
 ## What's new in 0.3.1
 
@@ -479,6 +542,31 @@ ctxbudgeter mcp-audit tools.json
 # Select the most relevant tools for a task under a token budget
 ctxbudgeter mcp-select tools.json --task "refund a customer" --budget 2000
 ctxbudgeter mcp-viz tools.json --out mcp_map.html
+```
+
+### Adaptive Context Engine (0.4)
+
+```bash
+# Benchmark context management: harness vs unrestricted vs guided vs adaptive
+ctxbudgeter bench -a competent --budgets 4000,8000 --tasks 2 -o report.json --traces traces.jsonl
+
+# Profile behaviour from traces, propose (and store) an adaptive policy per model
+ctxbudgeter profile traces.jsonl --store .ctxbudgeter/policies
+
+# Certify context autonomy from benchmark evidence; show the audit history
+ctxbudgeter autonomy certify report.json --registry .ctxbudgeter/autonomy.json
+ctxbudgeter autonomy show competent bench-model
+
+# Training data from decision traces
+ctxbudgeter train-export traces.jsonl -o datasets/
+
+# The portable context-management skill
+ctxbudgeter skill export ~/.claude/skills
+ctxbudgeter skill show --brief --model claude-opus-5.5
+
+# Context tools for function calling, or the MCP server
+ctxbudgeter context-tools --provider anthropic
+ctxbudgeter serve-mcp --budget 128000 --state .ctx/session.json --allow-add
 ```
 
 Every command takes `--format json` where a machine-readable payload makes sense, and

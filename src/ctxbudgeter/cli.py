@@ -809,6 +809,225 @@ def mcp_viz_cmd(
     console.print(f"[green]MCP map written:[/green] {out}")
 
 
+# ============================================================ 0.4: Adaptive Context Engine
+
+skill_app = typer.Typer(help="Portable context-management skill (SKILL.md).", add_completion=False)
+autonomy_app = typer.Typer(help="Graduated context autonomy: certify, show, set.", add_completion=False)
+app.add_typer(skill_app, name="skill")
+app.add_typer(autonomy_app, name="autonomy")
+
+
+@skill_app.command("export")
+def skill_export_cmd(
+    dest: Path = typer.Argument(Path(".claude/skills"), help="Skills directory to export into."),
+    overwrite: bool = typer.Option(False, "--overwrite", help="Replace an existing copy."),
+) -> None:
+    """Copy the context-management skill (SKILL.md + references/) into a skills directory."""
+    from .skills import export_skill
+
+    try:
+        target = export_skill(dest, overwrite=overwrite)
+    except FileExistsError as e:
+        err_console.print(f"[red]error:[/red] {escape(str(e))}")
+        raise typer.Exit(code=1) from None
+    console.print(f"[green]Skill exported:[/green] {target}")
+
+
+@skill_app.command("show")
+def skill_show_cmd(
+    brief: bool = typer.Option(False, "--brief", help="Compact (~300 token) operating summary."),
+    model: str | None = typer.Option(None, "--model", "-m",
+                                     help="Specialise to a model's published behaviour prior."),
+    autonomy: int | None = typer.Option(None, "--autonomy", help="Autonomy level 0-4 to describe."),
+) -> None:
+    """Print the skill as a system-prompt section (policy thresholds, autonomy, adaptations)."""
+    from .skills import render_guidance
+
+    if model:
+        from .adaptive import PolicyTuner, prior_for
+
+        prior = prior_for(model)
+        if prior is None:
+            err_console.print(f"[yellow]no published prior for {escape(model)}; showing base guidance[/yellow]")
+            text = render_guidance(autonomy=autonomy, brief=brief)
+        else:
+            text = PolicyTuner().tune(prior).render_guidance(autonomy=autonomy, brief=brief)
+    else:
+        text = render_guidance(autonomy=autonomy, brief=brief)
+    sys.stdout.write(text)
+
+
+@app.command("bench")
+def bench_cmd(
+    agent: str = typer.Option("competent", "--agent", "-a",
+                              help="Reference agent: competent | anxious | avoidant | reckless."),
+    modes: str = typer.Option("harness,unrestricted,guided,adaptive", "--modes"),
+    families: str = typer.Option("research,coding,analytics,workflow,multi_agent", "--families"),
+    budgets: str = typer.Option("4000,8000", "--budgets", help="Comma-separated context budgets (tokens)."),
+    tasks_per_family: int = typer.Option(2, "--tasks", "-n"),
+    stream_tokens: int = typer.Option(12_000, "--stream-tokens", help="Approx. tokens of material per task."),
+    seed: int = typer.Option(7, "--seed"),
+    model: str = typer.Option("bench-model", "--model", "-m",
+                              help="Model id recorded in traces (selects a prior if no calibration data)."),
+    no_optimize: bool = typer.Option(False, "--no-optimize", help="Use the rule-tuned policy without search."),
+    out: Path | None = typer.Option(None, "--out", "-o", help="Write the full JSON report."),
+    traces: Path | None = typer.Option(None, "--traces", help="Write decision traces (JSONL)."),
+) -> None:
+    """Run CTXBench: harness vs unrestricted vs guided vs adaptive context management."""
+    from .bench import BenchRunner, TaskGenerator, make_agent
+    from .runtime import TraceLog
+
+    try:
+        make_agent(agent)
+        fams = [f.strip() for f in families.split(",") if f.strip()]
+        tasks = TaskGenerator(seed=seed).suite(fams, n=tasks_per_family, stream_tokens=stream_tokens)
+        runner = BenchRunner(tasks, lambda: make_agent(agent), modes=[m.strip() for m in modes.split(",")],
+                             budgets=[int(b) for b in budgets.split(",")], model=model,
+                             trace=TraceLog(traces) if traces else None, optimize=not no_optimize)
+    except ValueError as e:
+        err_console.print(f"[red]error:[/red] {escape(str(e))}")
+        raise typer.Exit(code=2) from None
+    report = runner.run()
+    if out is not None:
+        report.to_json(out)
+        err_console.print(f"[green]Report written:[/green] {out}")
+    sys.stdout.write(report.to_markdown())
+
+
+@app.command("profile")
+def profile_cmd(
+    traces: list[Path] = typer.Argument(..., help="Decision-trace JSONL file(s)."),
+    store: Path | None = typer.Option(None, "--store", help="Save tuned policies to this PolicyStore directory."),
+    out: Path | None = typer.Option(None, "--out", "-o", help="Write profiles + policies JSON."),
+) -> None:
+    """Profile how each model manages context and propose an adaptive policy."""
+    from .adaptive import BehaviorProfiler, PolicyStore, PolicyTuner
+    from .runtime import load_traces
+
+    missing = [p for p in traces if not p.exists()]
+    if missing:
+        err_console.print(f"[red]error:[/red] missing: {', '.join(map(str, missing))}")
+        raise typer.Exit(code=2)
+    profiles = BehaviorProfiler().profile(load_traces(*traces))
+    result: dict[str, dict[str, object]] = {}
+    for model, prof in profiles.items():
+        pol = PolicyTuner().tune(prof)
+        if store is not None:
+            PolicyStore(store).save(pol)
+        result[model] = {"profile": prof.to_dict(), "policy": pol.to_dict()}
+        console.print(f"[bold]{escape(model)}[/bold]: {prof.sessions} sessions, behaviours: "
+                      f"{', '.join(prof.behaviors) or 'none'}")
+        for r in pol.rules_applied:
+            console.print(f"  • {escape(r)}")
+    if out is not None:
+        out.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")
+        console.print(f"[green]Written:[/green] {out}")
+
+
+@app.command("train-export")
+def train_export_cmd(
+    traces: list[Path] = typer.Argument(..., help="Decision-trace JSONL file(s)."),
+    out_dir: Path = typer.Option(Path("ctx_datasets"), "--out", "-o"),
+) -> None:
+    """Build SFT, preference (DPO) and reward datasets from decision traces."""
+    from .runtime import load_traces
+    from .train import build_datasets
+
+    missing = [p for p in traces if not p.exists()]
+    if missing:
+        err_console.print(f"[red]error:[/red] missing: {', '.join(map(str, missing))}")
+        raise typer.Exit(code=2)
+    manifest = build_datasets(load_traces(*traces), out_dir)
+    console.print_json(json.dumps(manifest))
+
+
+@app.command("serve-mcp")
+def serve_mcp_cmd(
+    budget: int = typer.Option(128_000, "--budget", "-b"),
+    model: str = typer.Option("claude-sonnet-4.6", "--model", "-m"),
+    reserved: int = typer.Option(4_000, "--reserved-output"),
+    state: Path | None = typer.Option(None, "--state", help="Persist session state here (JSON)."),
+    autonomy: str = typer.Option("GOVERNED", "--autonomy", help="OBSERVE | RECOMMEND | SUPERVISED | GOVERNED | ADAPTIVE"),
+    allow_add: bool = typer.Option(False, "--allow-add", help="Expose context_add for harness-side event pushes."),
+) -> None:
+    """Serve the governed context API as an MCP server over stdio."""
+    from .adapters.mcp_server import ContextMCPServer
+    from .governance import AutonomyLevel
+    from .runtime import ContextRuntime
+
+    try:
+        level = AutonomyLevel.parse(autonomy)
+        if state is not None:
+            server = ContextMCPServer.from_state(state, budget=budget, model=model, allow_add=allow_add,
+                                                 reserved_output_tokens=reserved, autonomy=level)
+        else:
+            server = ContextMCPServer(ContextRuntime(budget=budget, model=model, reserved_output_tokens=reserved,
+                                                     autonomy=level), allow_add=allow_add)
+    except (ValueError, KeyError) as e:
+        err_console.print(f"[red]error:[/red] {escape(str(e))}")
+        raise typer.Exit(code=2) from None
+    server.serve()
+
+
+@app.command("context-tools")
+def context_tools_cmd(
+    provider: str = typer.Option("openai", "--provider", "-p", help="openai | anthropic | mcp"),
+) -> None:
+    """Print the context-API tool definitions for a provider."""
+    from .adapters.context_tools import anthropic_tools, mcp_tools, openai_tools
+
+    fn = {"openai": openai_tools, "anthropic": anthropic_tools, "mcp": mcp_tools}.get(provider)
+    if fn is None:
+        err_console.print("[red]error:[/red] provider must be openai, anthropic or mcp")
+        raise typer.Exit(code=2)
+    sys.stdout.write(json.dumps(fn(), indent=2) + "\n")
+
+
+@autonomy_app.command("certify")
+def autonomy_certify_cmd(
+    report: Path = typer.Argument(..., help="CTXBench JSON report (from `bench --out`)."),
+    registry: Path = typer.Option(Path(".ctxbudgeter/autonomy.json"), "--registry"),
+    agent_id: str | None = typer.Option(None, "--agent-id", help="Defaults to the report's agent."),
+    model: str | None = typer.Option(None, "--model", help="Defaults to the report's model."),
+    mode: str = typer.Option("adaptive", "--mode", help="Which mode's episodes count as evidence."),
+) -> None:
+    """Promote, hold or demote an agent's context autonomy from benchmark evidence."""
+    from .governance import AutonomyRegistry, Evidence
+
+    if not report.exists():
+        err_console.print(f"[red]error:[/red] file does not exist: {report}")
+        raise typer.Exit(code=2)
+    data = json.loads(report.read_text(encoding="utf-8"))
+    eps = [e for e in data.get("episodes", []) if e.get("mode") == mode]
+    if not eps:
+        err_console.print(f"[red]error:[/red] no '{escape(mode)}' episodes in the report")
+        raise typer.Exit(code=2)
+    ev = Evidence(episodes=len(eps), mean_cis=sum(e["cis"] for e in eps) / len(eps),
+                  critical_violations=sum(e["critical_violations"] for e in eps),
+                  mean_retention=sum(e["retention"] for e in eps) / len(eps), source=str(report))
+    reg = AutonomyRegistry(registry)
+    res = reg.certify(agent_id or data["agent"], model or data["model"], ev)
+    console.print(f"[bold]{res.action}[/bold]: L{int(res.current)} → L{int(res.new)} ({res.new.name})")
+    for r in res.reasons:
+        console.print(f"  • {escape(r)}")
+
+
+@autonomy_app.command("show")
+def autonomy_show_cmd(
+    agent_id: str = typer.Argument(...),
+    model: str = typer.Argument(...),
+    registry: Path = typer.Option(Path(".ctxbudgeter/autonomy.json"), "--registry"),
+) -> None:
+    """Show an agent's autonomy level and certification history."""
+    from .governance import AutonomyRegistry
+
+    reg = AutonomyRegistry(registry)
+    lvl = reg.level(agent_id, model)
+    console.print(f"{escape(agent_id)}@{escape(model)}: L{int(lvl)} ({lvl.name})")
+    for h in reg.history(agent_id, model):
+        console.print(f"  {h['action']}: L{h['from']} → L{h['to']} — {escape('; '.join(h['reasons']))}")
+
+
 def _emit(text: str, out: Path | None) -> None:
     """Write text to a file or stdout."""
     if out is not None:

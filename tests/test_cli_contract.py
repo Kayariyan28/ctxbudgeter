@@ -28,7 +28,18 @@ runner = CliRunner()
 COMMANDS = [
     "scan", "compile", "pack", "validate", "report", "scan-risk", "bom", "diff",
     "eval", "cache-plan", "viz", "viz-diff", "mcp-audit", "mcp-select", "mcp-viz",
+    # 0.4 Adaptive Context Engine
+    "bench", "profile", "train-export", "serve-mcp", "context-tools", "skill", "autonomy",
 ]
+
+SUBCOMMANDS = [["skill", "export"], ["skill", "show"], ["autonomy", "certify"], ["autonomy", "show"]]
+
+
+@pytest.mark.parametrize("argv", SUBCOMMANDS, ids=lambda a: " ".join(a))
+def test_nested_subcommand_help_renders(argv: list[str]) -> None:
+    result = runner.invoke(app, [*argv, "--help"])
+    assert result.exit_code == 0, result.output
+    assert "Usage" in result.stdout or "Options" in result.stdout
 
 
 def test_root_help_renders() -> None:

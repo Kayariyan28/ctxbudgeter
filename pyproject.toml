@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ctxbudgeter"
-version = "0.3.2"
-description = "ContextOps toolkit for production AI agents: compile, audit, govern, visualize, and optimize LLM context before every model call. Token budgets, policy governance, PII/secret scanning, Context Bill of Materials, context diffing, Context MRI, and MCP tool budgeting. Framework-agnostic. Local-first. Deterministic."
+version = "0.4.0"
+description = "Model-agnostic context intelligence for AI agents: compile, audit and govern LLM context before every call, and let agents manage their own context safely — a governed context API (compact, pin, archive, recall, rollback), graduated autonomy, a portable context-management skill, behavioural policy learning, the CTXBench benchmark, training-data export and an MCP server. Token budgets, PII/secret scanning, Context Bill of Materials, Context MRI. Framework-agnostic. Local-first. Deterministic."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
@@ -17,6 +17,10 @@ maintainers = [
 ]
 keywords = [
     "context-engineering",
+    "context-management",
+    "context-compaction",
+    "agent-memory",
+    "llm-benchmark",
     "contextops",
     "agentic-ai",
     "ai-agents",
