@@ -4,6 +4,82 @@ All notable changes to `ctxbudgeter` are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-11-27
+
+**The Adaptive Context Engine.** ctxbudgeter becomes a model-agnostic context
+intelligence layer: it enables, teaches, governs and evaluates how agents manage their
+*own* context, grounded in NVIDIA's *Letting Models Manage Their Own Context: Where We
+Stand* (arXiv 2611.34147), Apple's SelfCompact, and UW/Meta's Context Language Models.
+Fully backward compatible: every 0.3 import path and CLI command is unchanged.
+
+### Added
+
+- **`ctxbudgeter.runtime` — `ContextRuntime`**, a governed live-context API:
+  `inspect`, `budget`, `diagnose`, `plan`, `compact`, `pin`/`unpin`, `archive`, `recall`
+  (with `restore`), `search_archive`, `recall_hints`, `checkpoint`, `rollback`,
+  `evaluate`, `signal`. Tagged events with NOOA-style range tags (`3..17`), a
+  non-destructive append-only archive (in-memory or JSON), context categories
+  (protected / task-critical / working / compressible / archivable).
+  - `step()` books each model request: hard-budget enforcement with the paper's
+    drop-oldest fallback, optional governed fallback compaction, pressure warnings.
+  - `PrefillCostModel` — prefill tokens under prefix caching vs suffix KV reuse.
+  - `CompactionRubric` — SelfCompact-style timing (floor / boundary / trigger / hard limit).
+  - Cache-aware planner (saved tokens × remaining requests − prefix recompute), which
+    avoids re-summarizing earlier summaries unless nothing else is left.
+  - `ExtractiveSummarizer` — deterministic, salient-term-dense, template-redundancy aware.
+  - `HarnessCompactor` — the harness-driven baseline (80% / keep last 10).
+  - `DecisionTrace` / `TraceLog` (JSONL) for every proposal; `end_session()` outcomes.
+  - `to_messages()` (OpenAI / Anthropic) and `to_context_pack()` bridge into the 0.3
+    compile, policy, BOM and MRI pipeline.
+- **`ctxbudgeter.governance`** is now a package. `enforce_policy` and
+  `PolicyViolationError` keep their import path. New:
+  - `EditGovernor` + `ContextEditPolicy`: protected / pinned / recent context,
+    usage floor, compression cap, critical-fact and summary-detail retention, span,
+    pin budget, restore limit, mutation rate, secret redaction in summaries,
+    provenance footers; `unrestricted()` (detect-only) and `strict()` presets.
+  - Graduated autonomy `AutonomyLevel` L0–L4 (observe, recommend, supervised with
+    approval queue or approver callback, governed with auto-checkpoints, adaptive);
+    `AutonomyCertifier` and a persistent `AutonomyRegistry` with audit history.
+- **`ctxbudgeter.skills`** — the portable `context-management` skill (SKILL.md +
+  `references/api.md` + `references/examples.md`), `export_skill`, and
+  `render_guidance` with policy thresholds, autonomy text and behavioural adaptations.
+- **`ctxbudgeter.adaptive`** — `BehaviorProfiler`, `classify` (7 behaviours), published
+  priors for GPT-6.1 Sol / Kimi K3 / DeepSeek V4 Pro / Claude Opus 5.5, `PolicyTuner`,
+  `PolicyOptimizer` (tuned vs per-rule ablations vs base), `validate_policy`, a
+  versioned `PolicyStore`, and `AdaptivePolicy.transfer_to` (unvalidated by design).
+- **`ctxbudgeter.bench` — CTXBench**: seeded tasks in five families with planted facts,
+  late corrections, duplicates and distractors; four modes (harness, unrestricted,
+  guided, adaptive with calibration-learned policies); the Context Intelligence Score
+  with a critical-violation override; reference agents (competent, anxious, avoidant,
+  reckless); `LLMContextAgent` with `openai_complete` / `anthropic_complete`.
+- **`ctxbudgeter.train`** — outcome-based labels and shaped rewards; SFT (OpenAI chat
+  format), conversational DPO pairs, and RL reward-record exporters.
+- **`ctxbudgeter.adapters`** — context tools for OpenAI / Anthropic / MCP with a shared
+  `ContextToolDispatcher`; a dependency-free stdio **MCP server** with persistent
+  sessions and the skill as a resource; `ContextHarness` for any agent loop
+  (including guidance-only mode).
+- **`ctxbudgeter.core`** — stable namespace for the compile-time toolkit.
+- **CLI**: `bench`, `profile`, `train-export`, `serve-mcp`, `context-tools`,
+  `skill export|show`, `autonomy certify|show`.
+- Docs: [`docs/context_intelligence.md`](docs/context_intelligence.md), benchmark
+  reports in [`docs/ctxbench/`](docs/ctxbench/); examples
+  `examples/context_runtime_demo.py`, `examples/ctxbench_demo.py`.
+- 107 new tests (383 total).
+
+### Changed
+
+- **README rewritten** around both halves of the toolkit (Adaptive Context Engine and
+  ContextOps): install extras, six quick-start paths (live runtime, OpenAI / Anthropic agent
+  loops, MCP clients, the skill, benchmarking, compile-time packs), an architecture diagram,
+  a supported tools and libraries matrix, a full CLI reference and research foundations.
+- **New README banner** in the K28 D2 design system, authored as a page in
+  [`docs/banner/`](docs/banner/) and rendered by `docs/generate_banner.py` with headless
+  Chrome (Playwright is no longer needed).
+- **New animated terminal demo** of the 0.4 workflow
+  ([`docs/ctxbudgeter-0.4-demo.svg`](docs/ctxbudgeter-0.4-demo.svg)), generated from real
+  command output by [`docs/demo/make_terminal_svg.py`](docs/demo/make_terminal_svg.py). The
+  0.3 ContextOps demo is kept.
+
 ## [0.3.2] - 2026-09-19
 
 Documentation only. No functional change: `src/` is byte-identical to 0.3.1.
