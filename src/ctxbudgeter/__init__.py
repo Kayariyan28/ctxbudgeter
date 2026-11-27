@@ -58,7 +58,7 @@ from .scanner import ContextScanner, Finding, ScanResult
 from .scoring import DEFAULT_WEIGHTS, score_item
 from .tokenizer import TokenCounter
 
-__version__ = "0.4.0"
+__version__ = "0.4.1"
 
 # 0.4 Adaptive Context Engine — resolved lazily so `import ctxbudgeter` stays light.
 _LAZY: dict[str, tuple[str, str]] = {
